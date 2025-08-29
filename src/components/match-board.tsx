@@ -18,7 +18,7 @@ interface MatchBoardProps {
 const TagIcon = ({ tag }: { tag?: string }) => {
     if (!tag) return null;
 
-    if (tag.includes('star')) {
+    if (tag.includes('star') || tag.includes('triangle')) {
         return <Star className="h-4 w-4 text-yellow-500" title={tag} />;
     }
     if (tag.includes('dot') || tag.includes('circle')) {
