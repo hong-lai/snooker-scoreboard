@@ -5,10 +5,10 @@ import { updateMatch } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableCaption } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableCaption, TableFooter as UITableFooter } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import { verifySnookerScoreEntry } from '@/ai/flows/verify-snooker-score-entry';
-import { Loader2, Save, Trophy, Star } from 'lucide-react';
+import { Loader2, Save, Trophy, Star, ShieldAlert, TrendingUp } from 'lucide-react';
 
 interface MatchBoardProps {
   initialMatch: Match;
@@ -78,6 +78,9 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
     else if (frame.player2Score > frame.player1Score) p2Wins++;
   });
 
+  const p1TotalScore = match.frames.reduce((sum, frame) => sum + frame.player1Score, 0);
+  const p2TotalScore = match.frames.reduce((sum, frame) => sum + frame.player2Score, 0);
+
   return (
     <Card>
       <CardHeader className="text-center">
@@ -96,6 +99,30 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
                     <span>Match Ended</span>
                 </div>
             )}
+        </div>
+        <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground mt-6 border-t pt-4">
+            <div className="text-center space-y-1">
+                <div className="font-bold">{match.player1Name}</div>
+                 <div className="flex items-center justify-center gap-2">
+                    <TrendingUp className="h-4 w-4 text-primary" />
+                    <span>Total Points: {p1TotalScore}</span>
+                </div>
+                <div className="flex items-center justify-center gap-2">
+                    <ShieldAlert className="h-4 w-4 text-destructive" />
+                    <span>Foul Points: {match.player1TotalFoulPoints}</span>
+                </div>
+            </div>
+             <div className="text-center space-y-1">
+                <div className="font-bold">{match.player2Name}</div>
+                 <div className="flex items-center justify-center gap-2">
+                    <TrendingUp className="h-4 w-4 text-primary" />
+                    <span>Total Points: {p2TotalScore}</span>
+                </div>
+                <div className="flex items-center justify-center gap-2">
+                    <ShieldAlert className="h-4 w-4 text-destructive" />
+                    <span>Foul Points: {match.player2TotalFoulPoints}</span>
+                </div>
+            </div>
         </div>
       </CardHeader>
       <CardContent>
@@ -138,6 +165,15 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
               </TableRow>
             )}
           </TableBody>
+          <UITableFooter>
+            <TableRow>
+                <TableCell className="font-bold text-center">Total</TableCell>
+                <TableCell className="text-right font-bold">{p1TotalScore}</TableCell>
+                <TableCell className="text-center w-[20px]">-</TableCell>
+                <TableCell className="text-left font-bold">{p2TotalScore}</TableCell>
+                <TableCell />
+            </TableRow>
+          </UITableFooter>
         </Table>
       </CardContent>
       {match.status === 'playing' && (
