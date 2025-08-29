@@ -187,9 +187,7 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
           <TableHeader>
             <TableRow>
               <TableHead className="w-[50px] text-center">Frame</TableHead>
-              <TableHead className="text-right">{match.player1Name}</TableHead>
-              <TableHead className="text-center w-[20px]">vs</TableHead>
-              <TableHead>{match.player2Name}</TableHead>
+              <TableHead colSpan={3} className="text-center">{match.player1Name} vs {match.player2Name}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -200,8 +198,8 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
                   <span className={frame.player1Score > frame.player2Score ? 'font-bold' : ''}>{frame.player1Score}</span>
                   {frame.player1FoulPoints > 0 && <span className="text-destructive/80 ml-1">({frame.player1FoulPoints})</span>}
                 </TableCell>
-                <TableCell className="text-center">-</TableCell>
-                <TableCell>
+                <TableCell className="text-center w-[20px]">-</TableCell>
+                <TableCell className="text-left">
                   <span className={frame.player2Score > frame.player1Score ? 'font-bold' : ''}>{frame.player2Score}</span>
                   {frame.player2FoulPoints > 0 && <span className="text-destructive/80 ml-1">({frame.player2FoulPoints})</span>}
                 </TableCell>
@@ -216,7 +214,7 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
                     <Input name="p1Foul" value={newFrame.p1Foul} onChange={handleInputChange} className="w-16 h-8 text-right" placeholder="Foul"/>
                   </div>
                 </TableCell>
-                <TableCell className="text-center">-</TableCell>
+                <TableCell className="text-center w-[20px]">-</TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1">
                     <Input name="p2Score" value={newFrame.p2Score} onChange={handleInputChange} className="w-20 h-8" placeholder="Score"/>
