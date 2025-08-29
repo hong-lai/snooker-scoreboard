@@ -19,6 +19,7 @@ const getInitialMatches = (): Match[] => {
           ...m,
           player1TotalFoulPoints: m.player1TotalFoulPoints || 0,
           player2TotalFoulPoints: m.player2TotalFoulPoints || 0,
+          scoreboardImage: m.scoreboardImage || undefined,
         }))
       }
     } catch (e) {
@@ -102,5 +103,3 @@ export const deleteMatch = (id: string): void => {
   matches = matches.filter((match) => match.id !== id);
   localStorage.setItem(STORE_KEY, JSON.stringify(matches));
 };
-
-    

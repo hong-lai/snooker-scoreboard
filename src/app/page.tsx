@@ -55,6 +55,30 @@ const parseDateFromFilename = (filename: string): Date | null => {
     return null;
 };
 
+const reduceImageSize = (base64Str: string, maxWidth = 800, quality = 0.7): Promise<string> => {
+  return new Promise((resolve) => {
+    const img = document.createElement('img');
+    img.src = base64Str;
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const ratio = img.width / img.height;
+      let width = img.width;
+      let height = img.height;
+
+      if (width > maxWidth) {
+        width = maxWidth;
+        height = maxWidth / ratio;
+      }
+      
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext('2d');
+      ctx?.drawImage(img, 0, 0, width, height);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+  });
+}
 
 export default function DashboardPage() {
   const [matches, setMatches] = useState<Match[]>([]);
@@ -162,12 +186,15 @@ export default function DashboardPage() {
 
     const newMatch = createMatch(result.player1Name, result.player2Name, matchDate);
     
+    const reducedImage = await reduceImageSize(photoDataUri);
+    
     const updatedMatch: Match = { 
       ...newMatch,
       player1TotalFoulPoints: result.player1TotalFoulPoints,
       player2TotalFoulPoints: result.player2TotalFoulPoints,
       frames: newFrames,
       status: 'ended', // Assume uploaded scoreboards are for ended matches
+      scoreboardImage: reducedImage,
     };
     updateMatch(updatedMatch);
     return updatedMatch;

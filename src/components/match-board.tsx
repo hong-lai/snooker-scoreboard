@@ -6,9 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableCaption, TableFooter as UITableFooter } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 import { verifySnookerScoreEntry } from '@/ai/flows/verify-snooker-score-entry';
-import { Loader2, Save, Trophy, Star, ShieldAlert, TrendingUp, Circle } from 'lucide-react';
+import { Loader2, Save, Trophy, Star, ShieldAlert, TrendingUp, Circle, FileImage } from 'lucide-react';
 
 interface MatchBoardProps {
   initialMatch: Match;
@@ -189,18 +191,43 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
           </UITableFooter>
         </Table>
       </CardContent>
-      {match.status === 'playing' && (
-        <CardFooter className="flex-col sm:flex-row gap-2">
-            <Button onClick={handleSaveFrame} disabled={isSaving || (!newFrame.p1Score && !newFrame.p2Score)} className="w-full sm:w-auto">
-                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                <Save className="mr-2 h-4 w-4" /> Save Frame
-            </Button>
-            <Button onClick={handleEndMatch} variant="destructive" disabled={isEndingMatch} className="w-full sm:w-auto sm:ml-auto">
-                {isEndingMatch && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                End Match
-            </Button>
-        </CardFooter>
-      )}
+      <CardFooter className="flex-col sm:flex-row gap-2">
+        {match.scoreboardImage && (
+            <Dialog>
+                <DialogTrigger asChild>
+                    <Button variant="secondary" className="w-full sm:w-auto">
+                        <FileImage className="mr-2 h-4 w-4" />
+                        View Scoreboard
+                    </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl">
+                    <DialogHeader>
+                        <DialogTitle>Original Scoreboard</DialogTitle>
+                        <DialogDescription>
+                            This is the uploaded image for this match.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="relative h-[80vh]">
+                        <Image src={match.scoreboardImage} alt="Original scoreboard" layout="fill" objectFit="contain" data-ai-hint="scoreboard photo" />
+                    </div>
+                </DialogContent>
+            </Dialog>
+        )}
+        {match.status === 'playing' ? (
+            <>
+                <Button onClick={handleSaveFrame} disabled={isSaving || (!newFrame.p1Score && !newFrame.p2Score)} className="w-full sm:w-auto">
+                    {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    <Save className="mr-2 h-4 w-4" /> Save Frame
+                </Button>
+                <Button onClick={handleEndMatch} variant="destructive" disabled={isEndingMatch} className="w-full sm:w-auto sm:ml-auto">
+                    {isEndingMatch && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    End Match
+                </Button>
+            </>
+        ) : (
+             <div className="flex-1" /> // Spacer
+        )}
+      </CardFooter>
     </Card>
   );
 }

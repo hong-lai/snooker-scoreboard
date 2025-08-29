@@ -13,4 +13,5 @@ export interface Match {
   player2TotalFoulPoints: number;
   status: 'playing' | 'ended';
   createdAt: string;
+  scoreboardImage?: string;
 }
