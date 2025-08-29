@@ -143,7 +143,11 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
       <CardHeader className="text-center">
         <div className="flex justify-between items-start">
             <div className="flex-1 text-center">
-                <CardTitle className="text-2xl md:text-3xl">{match.player1Name} vs {match.player2Name}</CardTitle>
+                <CardTitle className="flex items-center justify-center gap-3">
+                  <span className="text-2xl md:text-3xl font-bold truncate">{match.player1Name}</span>
+                  <span className="text-xl md:text-2xl text-muted-foreground">vs</span>
+                  <span className="text-2xl md:text-3xl font-bold truncate">{match.player2Name}</span>
+                </CardTitle>
                 <div className="text-3xl md:text-4xl font-bold text-primary mt-2">{p1Wins} - {p2Wins}</div>
             </div>
             {match.status === 'ended' ? (

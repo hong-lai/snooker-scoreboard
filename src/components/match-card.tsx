@@ -33,7 +33,9 @@ export function MatchCard({ match }: MatchCardProps) {
       <CardHeader>
         <div className="flex justify-between items-start">
             <CardTitle className="text-xl leading-snug">
-              {match.player1Name} vs {match.player2Name}
+              <span className="font-semibold">{match.player1Name}</span>
+              <span className="font-normal text-muted-foreground mx-2">vs</span>
+              <span className="font-semibold">{match.player2Name}</span>
             </CardTitle>
             <Badge variant={match.status === 'ended' ? 'secondary' : 'default'} className="capitalize shrink-0">
               {match.status}
