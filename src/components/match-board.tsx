@@ -99,7 +99,7 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
       <CardHeader className="text-center">
         <div className="flex justify-between items-start relative">
             <div className="flex-1 text-center">
-                <CardTitle className="flex items-center justify-center gap-3">
+                <CardTitle className="flex flex-col sm:flex-row items-center justify-center gap-3">
                   <span className="text-2xl md:text-3xl font-bold truncate">{match.player1Name}</span>
                   <span className="text-xl md:text-2xl text-muted-foreground">vs</span>
                   <span className="text-2xl md:text-3xl font-bold truncate">{match.player2Name}</span>
@@ -107,38 +107,38 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
                 <div className="text-3xl md:text-4xl font-bold text-primary mt-2">{p1Wins} - {p2Wins}</div>
             </div>
             {match.status === 'ended' && (
-                <div className="flex items-center gap-2 text-accent-foreground font-bold p-2 bg-accent rounded-lg absolute top-0 right-0">
-                    <Trophy className="h-6 w-6" />
+                <div className="flex items-center gap-2 text-accent-foreground font-bold p-2 bg-accent rounded-lg absolute -top-2 -right-2 md:top-0 md:right-0 text-xs md:text-base">
+                    <Trophy className="h-4 w-4 md:h-6 md:w-6" />
                     <span>Match Ended</span>
                 </div>
             )}
         </div>
-        <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground mt-6 border-t pt-4">
+        <div className="grid grid-cols-2 gap-4 text-xs md:text-sm text-muted-foreground mt-6 border-t pt-4">
             <div className="text-center space-y-1">
                 <div className="font-bold">{match.player1Name}</div>
                  <div className="flex items-center justify-center gap-2">
                     <TrendingUp className="h-4 w-4 text-primary" />
-                    <span>Total Points: {p1TotalScore}</span>
+                    <span>Points: {p1TotalScore}</span>
                 </div>
                 <div className="flex items-center justify-center gap-2">
                     <ShieldAlert className="h-4 w-4 text-destructive" />
-                    <span>Foul Points: {match.player1TotalFoulPoints}</span>
+                    <span>Fouls: {match.player1TotalFoulPoints}</span>
                 </div>
             </div>
              <div className="text-center space-y-1">
                 <div className="font-bold">{match.player2Name}</div>
                  <div className="flex items-center justify-center gap-2">
                     <TrendingUp className="h-4 w-4 text-primary" />
-                    <span>Total Points: {p2TotalScore}</span>
+                    <span>Points: {p2TotalScore}</span>
                 </div>
                 <div className="flex items-center justify-center gap-2">
                     <ShieldAlert className="h-4 w-4 text-destructive" />
-                    <span>Foul Points: {match.player2TotalFoulPoints}</span>
+                    <span>Fouls: {match.player2TotalFoulPoints}</span>
                 </div>
             </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-2 sm:px-6">
         <Table>
           <TableCaption>A list of all frames in the match.</TableCaption>
           <TableHeader>
@@ -169,9 +169,9 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
                 <TableCell className="font-medium text-center">{match.frames.length + 1}</TableCell>
                 <TableCell className="text-right" colSpan={3}>
                   <div className="flex items-center justify-center gap-1">
-                    <Input name="p1Score" value={newFrame.p1Score} onChange={handleInputChange} className="w-24 h-8 text-right" placeholder="Player 1 Score"/>
+                    <Input name="p1Score" value={newFrame.p1Score} onChange={handleInputChange} className="w-24 h-8 text-right" placeholder="P1 Score"/>
                     <span className="mx-2">vs</span>
-                    <Input name="p2Score" value={newFrame.p2Score} onChange={handleInputChange} className="w-24 h-8" placeholder="Player 2 Score"/>
+                    <Input name="p2Score" value={newFrame.p2Score} onChange={handleInputChange} className="w-24 h-8" placeholder="P2 Score"/>
                   </div>
                 </TableCell>
                 <TableCell />

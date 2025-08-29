@@ -314,7 +314,7 @@ export default function DashboardPage() {
                 <ResponsiveContainer width="100%" height={300}>
                     <BarChart data={playerWinData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="name" stroke="hsl(var(--foreground))" />
+                    <XAxis dataKey="name" stroke="hsl(var(--foreground))" tick={{fontSize: 12}} />
                     <YAxis stroke="hsl(var(--foreground))" allowDecimals={false} />
                     <Tooltip
                         cursor={{fill: 'hsl(var(--accent))'}}
@@ -338,7 +338,7 @@ export default function DashboardPage() {
                         <ResponsiveContainer width="100%" height={300}>
                             <LineChart data={monthlyWinData}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                                <XAxis dataKey="month" stroke="hsl(var(--foreground))" />
+                                <XAxis dataKey="month" stroke="hsl(var(--foreground))" tick={{fontSize: 12}} />
                                 <YAxis stroke="hsl(var(--foreground))" allowDecimals={false} />
                                 <Tooltip
                                     cursor={{fill: 'hsl(var(--accent))'}}
@@ -354,12 +354,12 @@ export default function DashboardPage() {
         </div>
 
 
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
           <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Match History</h2>
-          <div className="flex gap-2">
+          <div className="flex gap-2 w-full sm:w-auto">
             <Dialog>
                 <DialogTrigger asChild>
-                    <Button variant="outline"><Camera className="mr-2 h-4 w-4" /> Upload Scoreboard</Button>
+                    <Button variant="outline" className="w-full"><Camera className="mr-2 h-4 w-4" /> Upload</Button>
                 </DialogTrigger>
                 <DialogContent>
                     <DialogHeader>
@@ -376,12 +376,12 @@ export default function DashboardPage() {
                         <DialogClose id="close-upload-dialog" asChild><Button variant="ghost">Cancel</Button></DialogClose>
                         <Button onClick={handleTranslateImage} disabled={!uploadedImagePreview || isTranslating}>
                             {isTranslating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            {isTranslating ? 'Creating Match...' : 'Create Match'}
+                            {isTranslating ? 'Creating...' : 'Create Match'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-            <Button asChild>
+            <Button asChild className="w-full">
               <Link href="/new-match">
                 <Plus className="mr-2 h-4 w-4" />
                 New Match
@@ -391,7 +391,7 @@ export default function DashboardPage() {
         </div>
 
         {matches.length > 0 ? (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
             {matches.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map((match) => (
               <MatchCard key={match.id} match={match} onDelete={() => handleDeleteMatch(match.id)} />
             ))}
@@ -400,13 +400,13 @@ export default function DashboardPage() {
           <div className="text-center py-16 border-2 border-dashed rounded-lg">
             <h3 className="text-xl font-medium">No Matches Found</h3>
             <p className="text-muted-foreground mt-2 mb-4">Get started by creating your first match or uploading scoreboards.</p>
-            <div className="flex gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button asChild>
                 <Link href="/new-match">Create Your First Match</Link>
               </Button>
               <Button variant="outline" onClick={() => batchInputRef.current?.click()} disabled={isTranslating}>
                 {isTranslating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" /> }
-                Batch Upload Scoreboards
+                Batch Upload
               </Button>
               <input 
                 type="file" 
