@@ -8,12 +8,25 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableCaption, TableFooter as UITableFooter } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import { verifySnookerScoreEntry } from '@/ai/flows/verify-snooker-score-entry';
-import { Loader2, Save, Trophy, Star, ShieldAlert, TrendingUp } from 'lucide-react';
+import { Loader2, Save, Trophy, Star, ShieldAlert, TrendingUp, Circle } from 'lucide-react';
 
 interface MatchBoardProps {
   initialMatch: Match;
   onUpdate: () => void;
 }
+
+const TagIcon = ({ tag }: { tag?: string }) => {
+    if (!tag) return null;
+
+    if (tag.includes('star')) {
+        return <Star className="h-4 w-4 text-yellow-500" title={tag} />;
+    }
+    if (tag.includes('dot') || tag.includes('circle')) {
+        return <Circle className="h-3 w-3 text-blue-500 fill-current" title={tag} />;
+    }
+    return <span title={tag}>{tag}</span>;
+}
+
 
 export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
   const [match, setMatch] = useState(initialMatch);
@@ -147,7 +160,7 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
                   <span className={frame.player2Score > frame.player1Score ? 'font-bold' : ''}>{frame.player2Score}</span>
                 </TableCell>
                 <TableCell className="text-center">
-                  {frame.tag && <Star className="h-4 w-4 text-yellow-500" title={frame.tag} />}
+                    <TagIcon tag={frame.tag} />
                 </TableCell>
               </TableRow>
             ))}
