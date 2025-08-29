@@ -187,7 +187,7 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
           <TableHeader>
             <TableRow>
               <TableHead className="w-[50px] text-center">Frame</TableHead>
-              <TableHead colSpan={3} className="text-center">{match.player1Name} vs {match.player2Name}</TableHead>
+              <TableHead colSpan={3} className="text-center w-full">{match.player1Name} vs {match.player2Name}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -240,4 +240,3 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
       )}
     </Card>
   );
-}
