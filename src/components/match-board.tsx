@@ -1,17 +1,14 @@
 'use client';
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import type { Match, Frame } from '@/lib/types';
 import { updateMatch } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableCaption } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { translateSnookerScoreFromImage } from '@/ai/flows/translate-snooker-score-from-image';
 import { verifySnookerScoreEntry } from '@/ai/flows/verify-snooker-score-entry';
-import { Camera, Loader2, Save, Trophy, Star } from 'lucide-react';
-import Image from 'next/image';
+import { Loader2, Save, Trophy, Star } from 'lucide-react';
 
 interface MatchBoardProps {
   initialMatch: Match;
@@ -22,10 +19,7 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
   const [match, setMatch] = useState(initialMatch);
   const [newFrame, setNewFrame] = useState({ p1Score: '', p2Score: '' });
   const [isSaving, setIsSaving] = useState(false);
-  const [isTranslating, setIsTranslating] = useState(false);
   const [isEndingMatch, setIsEndingMatch] = useState(false);
-  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -76,60 +70,6 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
     onUpdate();
     setIsEndingMatch(false);
   };
-  
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const result = event.target?.result as string;
-        setUploadedImage(result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleTranslateImage = async () => {
-    if (!uploadedImage) return;
-    setIsTranslating(true);
-
-    try {
-      const result = await translateSnookerScoreFromImage({ photoDataUri: uploadedImage });
-      const newFrames: Frame[] = result.frames.map(f => ({
-          player1Score: f.player1Score,
-          player2Score: f.player2Score,
-          tag: f.tag,
-      }));
-      
-      const updatedMatch = { 
-        ...match, 
-        player1Name: result.player1Name,
-        player2Name: result.player2Name,
-        player1TotalFoulPoints: (match.player1TotalFoulPoints || 0) + result.player1TotalFoulPoints,
-        player2TotalFoulPoints: (match.player2TotalFoulPoints || 0) + result.player2TotalFoulPoints,
-        frames: [...match.frames, ...newFrames],
-      };
-      updateMatch(updatedMatch);
-      setMatch(updatedMatch);
-      onUpdate();
-
-      toast({
-        title: "Scoreboard Translated!",
-        description: `${newFrames.length} frames have been added to the match.`
-      });
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: "Translation Failed",
-        description: "Could not extract scores from the image. Please try another photo."
-      });
-    } finally {
-      setIsTranslating(false);
-      setUploadedImage(null);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-      document.getElementById('close-dialog')?.click();
-    }
-  };
 
   let p1Wins = 0;
   let p2Wins = 0;
@@ -141,7 +81,7 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
   return (
     <Card>
       <CardHeader className="text-center">
-        <div className="flex justify-between items-start">
+        <div className="flex justify-between items-start relative">
             <div className="flex-1 text-center">
                 <CardTitle className="flex items-center justify-center gap-3">
                   <span className="text-2xl md:text-3xl font-bold truncate">{match.player1Name}</span>
@@ -150,37 +90,10 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
                 </CardTitle>
                 <div className="text-3xl md:text-4xl font-bold text-primary mt-2">{p1Wins} - {p2Wins}</div>
             </div>
-            {match.status === 'ended' ? (
-                <div className="flex items-center gap-2 text-accent font-bold p-2 bg-accent/10 rounded-lg absolute top-6 right-6">
+            {match.status === 'ended' && (
+                <div className="flex items-center gap-2 text-accent-foreground font-bold p-2 bg-accent rounded-lg absolute top-0 right-0">
                     <Trophy className="h-6 w-6" />
                     <span>Match Ended</span>
-                </div>
-            ) : (
-                <div className="absolute top-6 right-6">
-                    <Dialog>
-                        <DialogTrigger asChild>
-                            <Button variant="outline"><Camera className="mr-2 h-4 w-4" /> Upload Scoreboard</Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                            <DialogTitle>Translate Scoreboard Image</DialogTitle>
-                            <DialogDescription>
-                                Upload a photo of the scoreboard, and AI will fill in the scores for you.
-                            </DialogDescription>
-                            </DialogHeader>
-                            <div className="space-y-4">
-                                <Input type="file" accept="image/*" onChange={handleImageUpload} ref={fileInputRef} />
-                                {uploadedImage && <Image src={uploadedImage} alt="Uploaded scoreboard" width={400} height={300} className="rounded-md object-contain mx-auto" data-ai-hint="scoreboard photo" />}
-                            </div>
-                            <DialogFooter>
-                                <DialogClose id="close-dialog" asChild><Button variant="ghost">Cancel</Button></DialogClose>
-                                <Button onClick={handleTranslateImage} disabled={!uploadedImage || isTranslating}>
-                                    {isTranslating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                    {isTranslating ? 'Translating...' : 'Translate'}
-                                </Button>
-                            </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
                 </div>
             )}
         </div>

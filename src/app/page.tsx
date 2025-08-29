@@ -1,13 +1,19 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Header } from '@/components/header';
 import { MatchCard } from '@/components/match-card';
-import type { Match } from '@/lib/types';
-import { getMatches } from '@/lib/store';
-import { Plus } from 'lucide-react';
+import type { Match, Frame } from '@/lib/types';
+import { getMatches, createMatch, updateMatch } from '@/lib/store';
+import { Plus, Camera, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import Image from 'next/image';
+import { useToast } from '@/hooks/use-toast';
+import { translateSnookerScoreFromImage } from '@/ai/flows/translate-snooker-score-from-image';
 import {
   Bar,
   BarChart,
@@ -30,6 +36,12 @@ export default function DashboardPage() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [isMounted, setIsMounted] = useState(false);
   const [playerWinData, setPlayerWinData] = useState<PlayerWinData[]>([]);
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
+  const router = useRouter();
+
 
   useEffect(() => {
     const allMatches = getMatches();
@@ -73,6 +85,63 @@ export default function DashboardPage() {
     setPlayerWinData(winData);
     setIsMounted(true);
   }, []);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const result = event.target?.result as string;
+        setUploadedImage(result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleTranslateImage = async () => {
+    if (!uploadedImage) return;
+    setIsTranslating(true);
+
+    try {
+      const result = await translateSnookerScoreFromImage({ photoDataUri: uploadedImage });
+      const newFrames: Frame[] = result.frames.map(f => ({
+          player1Score: f.player1Score,
+          player2Score: f.player2Score,
+          tag: f.tag,
+      }));
+      
+      const newMatch = createMatch(result.player1Name, result.player2Name);
+      
+      const updatedMatch: Match = { 
+        ...newMatch,
+        player1TotalFoulPoints: result.player1TotalFoulPoints,
+        player2TotalFoulPoints: result.player2TotalFoulPoints,
+        frames: newFrames,
+        status: 'ended', // Assume uploaded scoreboards are for ended matches
+      };
+      updateMatch(updatedMatch);
+
+      toast({
+        title: "Match Created!",
+        description: `A new match between ${result.player1Name} and ${result.player2Name} has been created from the scoreboard.`
+      });
+
+      router.push(`/match/${updatedMatch.id}`);
+
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: "Translation Failed",
+        description: "Could not extract scores from the image. Please try another photo."
+      });
+    } finally {
+      setIsTranslating(false);
+      setUploadedImage(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      document.getElementById('close-upload-dialog')?.click();
+    }
+  };
+
 
   if (!isMounted) {
     return (
@@ -131,12 +200,38 @@ export default function DashboardPage() {
 
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Match History</h2>
-          <Button asChild>
-            <Link href="/new-match">
-              <Plus className="mr-2 h-4 w-4" />
-              New Match
-            </Link>
-          </Button>
+          <div className="flex gap-2">
+            <Dialog>
+                <DialogTrigger asChild>
+                    <Button variant="outline"><Camera className="mr-2 h-4 w-4" /> Upload Scoreboard</Button>
+                </DialogTrigger>
+                <DialogContent>
+                    <DialogHeader>
+                    <DialogTitle>Create Match from Scoreboard</DialogTitle>
+                    <DialogDescription>
+                        Upload a photo of a completed scoreboard, and AI will create the match for you.
+                    </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <Input type="file" accept="image/*" onChange={handleImageUpload} ref={fileInputRef} />
+                        {uploadedImage && <Image src={uploadedImage} alt="Uploaded scoreboard" width={400} height={300} className="rounded-md object-contain mx-auto" data-ai-hint="scoreboard photo" />}
+                    </div>
+                    <DialogFooter>
+                        <DialogClose id="close-upload-dialog" asChild><Button variant="ghost">Cancel</Button></DialogClose>
+                        <Button onClick={handleTranslateImage} disabled={!uploadedImage || isTranslating}>
+                            {isTranslating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            {isTranslating ? 'Creating Match...' : 'Create Match'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+            <Button asChild>
+              <Link href="/new-match">
+                <Plus className="mr-2 h-4 w-4" />
+                New Match
+              </Link>
+            </Button>
+          </div>
         </div>
 
         {matches.length > 0 ? (
@@ -148,7 +243,7 @@ export default function DashboardPage() {
         ) : (
           <div className="text-center py-16 border-2 border-dashed rounded-lg">
             <h3 className="text-xl font-medium">No Matches Found</h3>
-            <p className="text-muted-foreground mt-2 mb-4">Get started by creating a new match.</p>
+            <p className="text-muted-foreground mt-2 mb-4">Get started by creating a new match or uploading a scoreboard.</p>
             <Button asChild>
               <Link href="/new-match">Create Your First Match</Link>
             </Button>
