@@ -31,12 +31,29 @@ interface PlayerWinData {
   wins: number;
 }
 
+// Function to parse date from filename (YYYY-MM-DD, YYYYMMDD, etc.)
+const parseDateFromFilename = (filename: string): Date | null => {
+    const regex = /(\d{4})[-_]?(\d{2})[-_]?(\d{2})/;
+    const match = filename.match(regex);
+    if (match) {
+        const [, year, month, day] = match;
+        const date = new Date(`${year}-${month}-${day}`);
+        if (!isNaN(date.getTime())) {
+            // It's a valid date, return it (ensuring it's treated as UTC midnight)
+            return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        }
+    }
+    return null;
+};
+
+
 export default function DashboardPage() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [isMounted, setIsMounted] = useState(false);
   const [playerWinData, setPlayerWinData] = useState<PlayerWinData[]>([]);
   const [isTranslating, setIsTranslating] = useState(false);
-  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [uploadedImagePreview, setUploadedImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const router = useRouter();
@@ -91,28 +108,31 @@ export default function DashboardPage() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const result = event.target?.result as string;
-        setUploadedImage(result);
-      };
-      reader.readAsDataURL(file);
+        setUploadedFile(file);
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const result = event.target?.result as string;
+            setUploadedImagePreview(result);
+        };
+        reader.readAsDataURL(file);
     }
   };
 
   const handleTranslateImage = async () => {
-    if (!uploadedImage) return;
+    if (!uploadedFile || !uploadedImagePreview) return;
     setIsTranslating(true);
 
     try {
-      const result = await translateSnookerScoreFromImage({ photoDataUri: uploadedImage });
+      const result = await translateSnookerScoreFromImage({ photoDataUri: uploadedImagePreview });
       const newFrames: Frame[] = result.frames.map(f => ({
           player1Score: f.player1Score,
           player2Score: f.player2Score,
           tag: f.tag,
       }));
       
-      const newMatch = createMatch(result.player1Name, result.player2Name);
+      const matchDate = parseDateFromFilename(uploadedFile.name) || new Date();
+
+      const newMatch = createMatch(result.player1Name, result.player2Name, matchDate);
       
       const updatedMatch: Match = { 
         ...newMatch,
@@ -139,7 +159,8 @@ export default function DashboardPage() {
       });
     } finally {
       setIsTranslating(false);
-      setUploadedImage(null);
+      setUploadedFile(null);
+      setUploadedImagePreview(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
       document.getElementById('close-upload-dialog')?.click();
     }
@@ -228,11 +249,11 @@ export default function DashboardPage() {
                     </DialogHeader>
                     <div className="space-y-4">
                         <Input type="file" accept="image/*" onChange={handleImageUpload} ref={fileInputRef} />
-                        {uploadedImage && <Image src={uploadedImage} alt="Uploaded scoreboard" width={400} height={300} className="rounded-md object-contain mx-auto" data-ai-hint="scoreboard photo" />}
+                        {uploadedImagePreview && <Image src={uploadedImagePreview} alt="Uploaded scoreboard" width={400} height={300} className="rounded-md object-contain mx-auto" data-ai-hint="scoreboard photo" />}
                     </div>
                     <DialogFooter>
                         <DialogClose id="close-upload-dialog" asChild><Button variant="ghost">Cancel</Button></DialogClose>
-                        <Button onClick={handleTranslateImage} disabled={!uploadedImage || isTranslating}>
+                        <Button onClick={handleTranslateImage} disabled={!uploadedImagePreview || isTranslating}>
                             {isTranslating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             {isTranslating ? 'Creating Match...' : 'Create Match'}
                         </Button>
@@ -267,3 +288,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    

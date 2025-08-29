@@ -73,7 +73,7 @@ export const getMatchById = (id: string): Match | undefined => {
   return matches.find((match) => match.id === id);
 };
 
-export const createMatch = (player1Name: string, player2Name: string): Match => {
+export const createMatch = (player1Name: string, player2Name: string, createdAt?: Date): Match => {
   const matches = getMatches();
   const newMatch: Match = {
     id: new Date().getTime().toString(),
@@ -83,7 +83,7 @@ export const createMatch = (player1Name: string, player2Name: string): Match => 
     player1TotalFoulPoints: 0,
     player2TotalFoulPoints: 0,
     status: 'playing',
-    createdAt: new Date().toISOString(),
+    createdAt: (createdAt || new Date()).toISOString(),
   };
   const updatedMatches = [...matches, newMatch];
   localStorage.setItem(STORE_KEY, JSON.stringify(updatedMatches));
@@ -102,3 +102,5 @@ export const deleteMatch = (id: string): void => {
   matches = matches.filter((match) => match.id !== id);
   localStorage.setItem(STORE_KEY, JSON.stringify(matches));
 };
+
+    

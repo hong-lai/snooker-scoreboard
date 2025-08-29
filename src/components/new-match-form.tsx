@@ -29,7 +29,7 @@ export function NewMatchForm() {
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
-    const newMatch = createMatch(values.player1Name, values.player2Name);
+    const newMatch = createMatch(values.player1Name, values.player2Name, new Date());
     router.push(`/match/${newMatch.id}`);
   }
 
@@ -70,3 +70,5 @@ export function NewMatchForm() {
     </Form>
   );
 }
+
+    
