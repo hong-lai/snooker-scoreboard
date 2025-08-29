@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Header } from '@/components/header';
 import { MatchCard } from '@/components/match-card';
 import type { Match, Frame } from '@/lib/types';
-import { getMatches, createMatch, updateMatch } from '@/lib/store';
+import { getMatches, createMatch, updateMatch, deleteMatch } from '@/lib/store';
 import { Plus, Camera, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
@@ -43,18 +43,16 @@ export default function DashboardPage() {
   const router = useRouter();
 
 
-  useEffect(() => {
+  const loadData = () => {
     const allMatches = getMatches();
     setMatches(allMatches);
 
     const playerStats: { [key: string]: { wins: number; foulPoints: number } } = {};
 
     allMatches.forEach(match => {
-      // Initialize players if not present
       if (!playerStats[match.player1Name]) playerStats[match.player1Name] = { wins: 0, foulPoints: 0 };
       if (!playerStats[match.player2Name]) playerStats[match.player2Name] = { wins: 0, foulPoints: 0 };
       
-      // Aggregate foul points
       playerStats[match.player1Name].foulPoints += match.player1TotalFoulPoints || 0;
       playerStats[match.player2Name].foulPoints += match.player2TotalFoulPoints || 0;
 
@@ -83,6 +81,10 @@ export default function DashboardPage() {
       .sort((a, b) => b.wins - a.wins);
 
     setPlayerWinData(winData);
+  }
+
+  useEffect(() => {
+    loadData();
     setIsMounted(true);
   }, []);
 
@@ -142,6 +144,14 @@ export default function DashboardPage() {
     }
   };
 
+  const handleDeleteMatch = (id: string) => {
+    deleteMatch(id);
+    loadData();
+    toast({
+        title: "Match Deleted",
+        description: "The match has been successfully removed."
+    });
+  };
 
   if (!isMounted) {
     return (
@@ -237,7 +247,7 @@ export default function DashboardPage() {
         {matches.length > 0 ? (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {matches.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map((match) => (
-              <MatchCard key={match.id} match={match} />
+              <MatchCard key={match.id} match={match} onDelete={() => handleDeleteMatch(match.id)} />
             ))}
           </div>
         ) : (

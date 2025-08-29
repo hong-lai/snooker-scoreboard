@@ -96,3 +96,9 @@ export const updateMatch = (updatedMatch: Match): Match => {
   localStorage.setItem(STORE_KEY, JSON.stringify(matches));
   return updatedMatch;
 };
+
+export const deleteMatch = (id: string): void => {
+  let matches = getMatches();
+  matches = matches.filter((match) => match.id !== id);
+  localStorage.setItem(STORE_KEY, JSON.stringify(matches));
+};
