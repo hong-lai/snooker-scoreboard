@@ -7,7 +7,7 @@ import { Header } from '@/components/header';
 import { MatchCard } from '@/components/match-card';
 import type { Match, Frame } from '@/lib/types';
 import { getMatches, createMatch, updateMatch, deleteMatch } from '@/lib/store';
-import { Plus, Camera, Loader2, Star, Circle, LogOut } from 'lucide-react';
+import { Plus, Camera, Loader2, Star, Circle, LogOut, Upload } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -15,6 +15,7 @@ import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 import { translateSnookerScoreFromImage } from '@/ai/flows/translate-snooker-score-from-image';
 import { format, parseISO } from 'date-fns';
+import JSZip from 'jszip';
 import {
   Bar,
   BarChart,
@@ -64,6 +65,7 @@ export default function DashboardPage() {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [uploadedImagePreview, setUploadedImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const batchInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const router = useRouter();
 
@@ -148,37 +150,42 @@ export default function DashboardPage() {
     }
   };
 
+  const processAndCreateMatch = async (photoDataUri: string, fileName: string) => {
+    const result = await translateSnookerScoreFromImage({ photoDataUri });
+    const newFrames: Frame[] = result.frames.map(f => ({
+        player1Score: f.player1Score,
+        player2Score: f.player2Score,
+        tag: f.tag,
+    }));
+    
+    const matchDate = parseDateFromFilename(fileName) || new Date();
+
+    const newMatch = createMatch(result.player1Name, result.player2Name, matchDate);
+    
+    const updatedMatch: Match = { 
+      ...newMatch,
+      player1TotalFoulPoints: result.player1TotalFoulPoints,
+      player2TotalFoulPoints: result.player2TotalFoulPoints,
+      frames: newFrames,
+      status: 'ended', // Assume uploaded scoreboards are for ended matches
+    };
+    updateMatch(updatedMatch);
+    return updatedMatch;
+  };
+
   const handleTranslateImage = async () => {
     if (!uploadedFile || !uploadedImagePreview) return;
     setIsTranslating(true);
 
     try {
-      const result = await translateSnookerScoreFromImage({ photoDataUri: uploadedImagePreview });
-      const newFrames: Frame[] = result.frames.map(f => ({
-          player1Score: f.player1Score,
-          player2Score: f.player2Score,
-          tag: f.tag,
-      }));
-      
-      const matchDate = parseDateFromFilename(uploadedFile.name) || new Date();
-
-      const newMatch = createMatch(result.player1Name, result.player2Name, matchDate);
-      
-      const updatedMatch: Match = { 
-        ...newMatch,
-        player1TotalFoulPoints: result.player1TotalFoulPoints,
-        player2TotalFoulPoints: result.player2TotalFoulPoints,
-        frames: newFrames,
-        status: 'ended', // Assume uploaded scoreboards are for ended matches
-      };
-      updateMatch(updatedMatch);
+      const newMatch = await processAndCreateMatch(uploadedImagePreview, uploadedFile.name);
 
       toast({
         title: "Match Created!",
-        description: `A new match between ${result.player1Name} and ${result.player2Name} has been created from the scoreboard.`
+        description: `A new match between ${newMatch.player1Name} and ${newMatch.player2Name} has been created.`
       });
 
-      router.push(`/match/${updatedMatch.id}`);
+      router.push(`/match/${newMatch.id}`);
 
     } catch (error) {
       console.error(error);
@@ -193,6 +200,63 @@ export default function DashboardPage() {
       setUploadedImagePreview(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
       document.getElementById('close-upload-dialog')?.click();
+      loadData();
+    }
+  };
+
+  const handleBatchUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !file.name.endsWith('.zip')) {
+      toast({
+        variant: 'destructive',
+        title: 'Invalid File',
+        description: 'Please upload a .zip file.',
+      });
+      return;
+    }
+
+    setIsTranslating(true);
+    const { dismiss } = toast({
+      title: 'Processing Batch Upload...',
+      description: 'Please wait while we extract and create your matches.',
+    });
+
+    try {
+      const zip = await JSZip.loadAsync(file);
+      const imageFiles = Object.values(zip.files).filter(
+        (f) => !f.dir && /\.(jpe?g|png|gif|webp)$/i.test(f.name)
+      );
+
+      let createdCount = 0;
+      for (const imageFile of imageFiles) {
+        try {
+          const content = await imageFile.async('base64');
+          const mimeType = `image/${imageFile.name.split('.').pop()}`;
+          const dataUri = `data:${mimeType};base64,${content}`;
+          await processAndCreateMatch(dataUri, imageFile.name);
+          createdCount++;
+        } catch (err) {
+            console.error(`Failed to process ${imageFile.name}:`, err)
+        }
+      }
+
+       toast({
+        title: 'Batch Upload Complete',
+        description: `Successfully created ${createdCount} out of ${imageFiles.length} matches.`,
+      });
+
+    } catch (error) {
+      console.error(error);
+      toast({
+        variant: 'destructive',
+        title: 'Batch Upload Failed',
+        description: 'There was an error processing the zip file.',
+      });
+    } finally {
+      setIsTranslating(false);
+      if (batchInputRef.current) batchInputRef.current.value = '';
+      dismiss();
+      loadData();
     }
   };
 
@@ -335,10 +399,23 @@ export default function DashboardPage() {
         ) : (
           <div className="text-center py-16 border-2 border-dashed rounded-lg">
             <h3 className="text-xl font-medium">No Matches Found</h3>
-            <p className="text-muted-foreground mt-2 mb-4">Get started by creating a new match or uploading a scoreboard.</p>
-            <Button asChild>
-              <Link href="/new-match">Create Your First Match</Link>
-            </Button>
+            <p className="text-muted-foreground mt-2 mb-4">Get started by creating your first match or uploading scoreboards.</p>
+            <div className="flex gap-4 justify-center">
+              <Button asChild>
+                <Link href="/new-match">Create Your First Match</Link>
+              </Button>
+              <Button variant="outline" onClick={() => batchInputRef.current?.click()} disabled={isTranslating}>
+                {isTranslating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" /> }
+                Batch Upload Scoreboards
+              </Button>
+              <input 
+                type="file" 
+                accept=".zip" 
+                ref={batchInputRef} 
+                onChange={handleBatchUpload}
+                className="hidden"
+              />
+            </div>
           </div>
         )}
       </main>
