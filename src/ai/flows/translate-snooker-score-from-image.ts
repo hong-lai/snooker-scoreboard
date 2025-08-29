@@ -50,18 +50,18 @@ const prompt = ai.definePrompt({
   output: {schema: TranslateSnookerScoreFromImageOutputSchema},
   prompt: `You are an AI expert at extracting snooker scores from images of handwritten scoreboards. Your task is to extract the data with perfect accuracy.
 
-  **EXTREMELY IMPORTANT RULE:** The physical order of the rows in the image is completely irrelevant. You **MUST** use the number inside the circle (e.g., ①, ②, ⑩) on each line as the one and only identifier for the \`frameNumber\`. If you process the rows from top to bottom, you will fail. You must identify the circled number for each row and use that for the frame number.
+  **CRITICAL RULE:** The physical, top-to-bottom order of the rows in the image is completely irrelevant. You **MUST** use the number inside the circle (e.g., ①, ⑩) on each line as the one and only identifier for the 'frameNumber'. If you process the rows from top to bottom, you will fail. You must identify the circled number for each row and use that for the frame number.
 
   **Step-by-step extraction process:**
   1.  **Identify All Frame Rows:** Look at every row that contains a score.
-  2.  **For EACH row, find the circled number first.** This is the \`frameNumber\`. For example, a row with ⑩ means \`frameNumber: 10\`.
-  3.  **Extract Player Scores:** For that same row, find the score in the 'L-Y' format. Be very careful reading the handwritten digits. '43-24' means \`player1Score: 43\` and \`player2Score: 24\`.
-  4.  **Extract Tag:** Look for any symbol like a star '☆' or a dot '•' on that row. This is the \`tag\`.
-  5.  **Assemble Frame Object:** Create a JSON object for that frame, e.g., \`{ "frameNumber": 10, "player1Score": 10, "player2Score": 46, "tag": "☆" }\`.
-  6.  **Repeat for ALL rows.**
+  2.  **For EACH row, find the circled number first.** This is the 'frameNumber'. For example, a row with ⑩ means 'frameNumber: 10'. A row with ① means 'frameNumber: 1'.
+  3.  **Extract Player Scores:** For that same row, find the score in the 'L-Y' format. Be very careful reading the handwritten digits. '43-24' means 'player1Score: 43' and 'player2Score: 24'.
+  4.  **Extract Tag:** Look for any symbol like a star '☆' or a dot '•' on that row. This is the 'tag'.
+  5.  **Assemble Frame Object:** Create a JSON object for that frame, e.g., { "frameNumber": 10, "player1Score": 10, "player2Score": 46, "tag": "☆" }.
+  6.  **Repeat for ALL rows.** You must find all rows with scores.
   7.  **Extract Player Names:** Player 1 is 'L'. Player 2 is 'Y'.
   8.  **Extract Foul Points:** Find the total foul points for each player. This is the negative number below the player's name (e.g., -78 for L). The output value must be a positive number.
-  9.  **Ignore Other Text:** All other text, including the large final scores (like 85 and 65), is irrelevant and must be ignored.
+  9.  **Ignore Other Text:** The large final scores (like 85 and 65) and any other text are irrelevant and MUST BE IGNORED. Only extract the data specified.
 
   You must return a JSON object containing the player data and an array of frame objects. The array must contain every single frame found in the image.
 
