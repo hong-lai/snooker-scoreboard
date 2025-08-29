@@ -140,42 +140,44 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="text-center">
         <div className="flex justify-between items-start">
-            <div>
+            <div className="flex-1 text-center">
                 <CardTitle className="text-2xl md:text-3xl">{match.player1Name} vs {match.player2Name}</CardTitle>
                 <div className="text-3xl md:text-4xl font-bold text-primary mt-2">{p1Wins} - {p2Wins}</div>
             </div>
             {match.status === 'ended' ? (
-                <div className="flex items-center gap-2 text-accent font-bold p-2 bg-accent/10 rounded-lg">
+                <div className="flex items-center gap-2 text-accent font-bold p-2 bg-accent/10 rounded-lg absolute top-6 right-6">
                     <Trophy className="h-6 w-6" />
                     <span>Match Ended</span>
                 </div>
             ) : (
-                <Dialog>
-                    <DialogTrigger asChild>
-                        <Button variant="outline"><Camera className="mr-2 h-4 w-4" /> Upload Scoreboard</Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                        <DialogTitle>Translate Scoreboard Image</DialogTitle>
-                        <DialogDescription>
-                            Upload a photo of the scoreboard, and AI will fill in the scores for you.
-                        </DialogDescription>
-                        </DialogHeader>
-                        <div className="space-y-4">
-                            <Input type="file" accept="image/*" onChange={handleImageUpload} ref={fileInputRef} />
-                            {uploadedImage && <Image src={uploadedImage} alt="Uploaded scoreboard" width={400} height={300} className="rounded-md object-contain mx-auto" data-ai-hint="scoreboard photo" />}
-                        </div>
-                        <DialogFooter>
-                            <DialogClose id="close-dialog" asChild><Button variant="ghost">Cancel</Button></DialogClose>
-                            <Button onClick={handleTranslateImage} disabled={!uploadedImage || isTranslating}>
-                                {isTranslating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                {isTranslating ? 'Translating...' : 'Translate'}
-                            </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
+                <div className="absolute top-6 right-6">
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <Button variant="outline"><Camera className="mr-2 h-4 w-4" /> Upload Scoreboard</Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                            <DialogTitle>Translate Scoreboard Image</DialogTitle>
+                            <DialogDescription>
+                                Upload a photo of the scoreboard, and AI will fill in the scores for you.
+                            </DialogDescription>
+                            </DialogHeader>
+                            <div className="space-y-4">
+                                <Input type="file" accept="image/*" onChange={handleImageUpload} ref={fileInputRef} />
+                                {uploadedImage && <Image src={uploadedImage} alt="Uploaded scoreboard" width={400} height={300} className="rounded-md object-contain mx-auto" data-ai-hint="scoreboard photo" />}
+                            </div>
+                            <DialogFooter>
+                                <DialogClose id="close-dialog" asChild><Button variant="ghost">Cancel</Button></DialogClose>
+                                <Button onClick={handleTranslateImage} disabled={!uploadedImage || isTranslating}>
+                                    {isTranslating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                    {isTranslating ? 'Translating...' : 'Translate'}
+                                </Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+                </div>
             )}
         </div>
       </CardHeader>

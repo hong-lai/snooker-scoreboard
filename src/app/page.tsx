@@ -33,7 +33,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="p-4 md:p-8">
+      <main className="p-4 md:p-8 page-transition">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Match History</h2>
           <Button asChild>

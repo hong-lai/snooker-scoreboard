@@ -31,7 +31,7 @@ export default function MatchPage() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="container mx-auto p-4 md:p-8">
+      <main className="container mx-auto p-4 md:p-8 page-transition">
         <div className="mb-4">
             <Button asChild variant="outline" size="sm">
                 <Link href="/">

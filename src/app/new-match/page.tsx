@@ -6,7 +6,7 @@ export default function NewMatchPage() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="container mx-auto p-4 md:p-8 flex justify-center">
+      <main className="container mx-auto p-4 md:p-8 flex justify-center page-transition">
         <Card className="w-full max-w-lg">
           <CardHeader>
             <CardTitle className="text-2xl">Start a New Match</CardTitle>
