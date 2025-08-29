@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster"
 export const metadata: Metadata = {
   title: 'SnookerScoreMate',
   description: 'An app to record snooker scores, with AI-powered features.',
+  robots: 'noindex, nofollow',
 };
 
 export default function RootLayout({

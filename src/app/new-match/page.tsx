@@ -5,10 +5,32 @@ import { NewMatchForm } from '@/components/new-match-form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 
 export default function NewMatchPage() {
+  const [isMounted, setIsMounted] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    const isLoggedIn = sessionStorage.getItem('isLoggedIn');
+    if (isLoggedIn !== 'true') {
+      router.replace('/login');
+    } else {
+      setIsMounted(true);
+    }
+  }, [router]);
+
+  if (!isMounted) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+  
   return (
     <div className="min-h-screen bg-background">
       <Header />

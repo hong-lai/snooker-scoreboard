@@ -7,7 +7,7 @@ import { Header } from '@/components/header';
 import { MatchCard } from '@/components/match-card';
 import type { Match, Frame } from '@/lib/types';
 import { getMatches, createMatch, updateMatch, deleteMatch } from '@/lib/store';
-import { Plus, Camera, Loader2, Star, Circle } from 'lucide-react';
+import { Plus, Camera, Loader2, Star, Circle, LogOut } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -40,6 +40,16 @@ export default function DashboardPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const router = useRouter();
+
+  useEffect(() => {
+    const isLoggedIn = sessionStorage.getItem('isLoggedIn');
+    if (isLoggedIn !== 'true') {
+      router.replace('/login');
+    } else {
+      loadData();
+      setIsMounted(true);
+    }
+  }, [router]);
 
 
   const loadData = () => {
@@ -77,11 +87,6 @@ export default function DashboardPage() {
 
     setPlayerWinData(winData);
   }
-
-  useEffect(() => {
-    loadData();
-    setIsMounted(true);
-  }, []);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -149,15 +154,15 @@ export default function DashboardPage() {
     });
   };
 
+  const handleLogout = () => {
+    sessionStorage.removeItem('isLoggedIn');
+    router.replace('/login');
+  };
+
   if (!isMounted) {
     return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <main className="p-4 md:p-8">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold tracking-tight">Match History</h2>
-          </div>
-        </main>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     )
   }
@@ -176,7 +181,12 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      <Header>
+        <Button onClick={handleLogout} variant="ghost" size="sm">
+          <LogOut className="mr-2 h-4 w-4" />
+          Logout
+        </Button>
+      </Header>
       <main className="p-4 md:p-8 page-transition">
         {playerWinData.length > 0 && (
           <Card className="mb-8">

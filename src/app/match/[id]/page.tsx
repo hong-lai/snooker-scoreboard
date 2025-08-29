@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { Header } from '@/components/header';
 import { MatchBoard } from '@/components/match-board';
 import type { Match } from '@/lib/types';
@@ -8,11 +8,26 @@ import { getMatchById } from '@/lib/store';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 
 export default function MatchPage() {
   const params = useParams();
+  const router = useRouter();
   const [match, setMatch] = useState<Match | null | undefined>(undefined);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+     const isLoggedIn = sessionStorage.getItem('isLoggedIn');
+    if (isLoggedIn !== 'true') {
+      router.replace('/login');
+    } else {
+      setIsMounted(true);
+      updateMatchData();
+      // Poll for updates to reflect changes from other tabs/windows
+      const interval = setInterval(updateMatchData, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [params.id, router]);
 
   const updateMatchData = () => {
     if (params.id) {
@@ -21,12 +36,13 @@ export default function MatchPage() {
     }
   };
 
-  useEffect(() => {
-    updateMatchData();
-    // Poll for updates to reflect changes from other tabs/windows
-    const interval = setInterval(updateMatchData, 1000);
-    return () => clearInterval(interval);
-  }, [params.id]);
+  if (!isMounted) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

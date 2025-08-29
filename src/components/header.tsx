@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import { Trophy } from 'lucide-react';
+import type { ReactNode } from 'react';
 
-export function Header() {
+export function Header({ children }: { children?: ReactNode }) {
   return (
     <header className="bg-card border-b">
       <div className="container mx-auto flex items-center justify-between p-4">
@@ -11,6 +12,7 @@ export function Header() {
             SnookerScoreMate
           </h1>
         </Link>
+        {children}
       </div>
     </header>
   );
