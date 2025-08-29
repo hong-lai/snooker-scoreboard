@@ -53,14 +53,14 @@ const prompt = ai.definePrompt({
   Given an image of a snooker scoreboard, extract the following information:
   - Player 1's Name is 'L'.
   - Player 2's Name is 'Y'.
-  - Each frame is numbered with a circled number (e.g., ①, ②). The frame number must be extracted.
+  - Each frame is numbered with a circled number (e.g., ①, ②). The frame number must be extracted. The order of frames in the output JSON does not matter.
   - The frame scores are in the format 'L-Y'. For example, '43-24' means L scored 43 and Y scored 24 for that frame.
   - Identify any special symbol or 'tag' (like a star '☆' or a dot '•') next to a frame score.
   - Extract the total foul points for each player. This is the negative number under the player's name (e.g., -99 for L). The output should be a positive number.
 
   The final scores (e.g., 85 and 65) should be ignored as they will be auto-calculated. Other text is irrelevant.
 
-  Return the data in JSON format. The frames array should contain all frames found, it does not need to be sorted.
+  Return the data in JSON format. The frames array should contain all frames found.
 
   Here is the image of the snooker scoreboard: {{media url=photoDataUri}}
   `,
