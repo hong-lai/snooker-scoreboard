@@ -14,9 +14,12 @@ import { Input } from '@/components/ui/input';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 import { translateSnookerScoreFromImage } from '@/ai/flows/translate-snooker-score-from-image';
+import { format, parseISO } from 'date-fns';
 import {
   Bar,
   BarChart,
+  Line,
+  LineChart,
   CartesianGrid,
   XAxis,
   YAxis,
@@ -29,6 +32,11 @@ import { TooltipProps } from 'recharts';
 interface PlayerWinData {
   name: string;
   wins: number;
+}
+
+interface MonthlyWinData {
+    month: string;
+    wins: number;
 }
 
 // Function to parse date from filename (YYYY-MM-DD, YYYYMMDD, etc.)
@@ -51,6 +59,7 @@ export default function DashboardPage() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [isMounted, setIsMounted] = useState(false);
   const [playerWinData, setPlayerWinData] = useState<PlayerWinData[]>([]);
+  const [monthlyWinData, setMonthlyWinData] = useState<MonthlyWinData[]>([]);
   const [isTranslating, setIsTranslating] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [uploadedImagePreview, setUploadedImagePreview] = useState<string | null>(null);
@@ -74,8 +83,21 @@ export default function DashboardPage() {
     setMatches(allMatches);
 
     const playerStats: { [key: string]: { wins: number } } = {};
+    const monthlyStats: { [key: string]: number } = {};
 
     allMatches.forEach(match => {
+      const matchDate = parseISO(match.createdAt);
+      
+      // Aggregate monthly stats
+      if (match.status === 'ended') {
+          const monthKey = format(matchDate, 'MMM yyyy');
+          if (!monthlyStats[monthKey]) {
+              monthlyStats[monthKey] = 0;
+          }
+          monthlyStats[monthKey]++;
+      }
+
+      // Aggregate player stats
       if (!playerStats[match.player1Name]) playerStats[match.player1Name] = { wins: 0 };
       if (!playerStats[match.player2Name]) playerStats[match.player2Name] = { wins: 0 };
       
@@ -101,8 +123,16 @@ export default function DashboardPage() {
         wins: playerStats[name].wins,
       }))
       .sort((a, b) => b.wins - a.wins);
+      
+    const monthlyData = Object.keys(monthlyStats)
+      .map(month => ({
+        month,
+        wins: monthlyStats[month],
+      }))
+      .sort((a,b) => new Date(a.month).getTime() - new Date(b.month).getTime());
 
     setPlayerWinData(winData);
+    setMonthlyWinData(monthlyData);
   }
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -193,7 +223,7 @@ export default function DashboardPage() {
       return (
         <div className="bg-card border p-2 rounded-md shadow-lg">
           <p className="font-bold">{label}</p>
-          <p className="text-primary">{`Wins: ${payload[0].value}`}</p>
+          <p className="text-primary">{`${payload[0].name}: ${payload[0].value}`}</p>
         </div>
       );
     }
@@ -209,29 +239,56 @@ export default function DashboardPage() {
         </Button>
       </Header>
       <main className="p-4 md:p-8 page-transition">
-        {playerWinData.length > 0 && (
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle>Player Leaderboard</CardTitle>
-              <CardDescription>An overview of player wins.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={playerWinData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="name" stroke="hsl(var(--foreground))" />
-                  <YAxis stroke="hsl(var(--foreground))" allowDecimals={false} />
-                  <Tooltip
-                    cursor={{fill: 'hsl(var(--accent))'}}
-                    content={<CustomTooltip />}
-                  />
-                  <Legend />
-                  <Bar dataKey="wins" fill="hsl(var(--primary))" name="Matches Won" />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        )}
+        <div className="grid gap-8 mb-8 md:grid-cols-2">
+            {playerWinData.length > 0 && (
+            <Card>
+                <CardHeader>
+                <CardTitle>Player Leaderboard</CardTitle>
+                <CardDescription>An overview of player wins.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={playerWinData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="name" stroke="hsl(var(--foreground))" />
+                    <YAxis stroke="hsl(var(--foreground))" allowDecimals={false} />
+                    <Tooltip
+                        cursor={{fill: 'hsl(var(--accent))'}}
+                        content={<CustomTooltip />}
+                    />
+                    <Legend />
+                    <Bar dataKey="wins" fill="hsl(var(--primary))" name="Matches Won" />
+                    </BarChart>
+                </ResponsiveContainer>
+                </CardContent>
+            </Card>
+            )}
+
+            {monthlyWinData.length > 0 && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Match Timeline</CardTitle>
+                        <CardDescription>Number of matches completed per month.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <ResponsiveContainer width="100%" height={300}>
+                            <LineChart data={monthlyWinData}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                                <XAxis dataKey="month" stroke="hsl(var(--foreground))" />
+                                <YAxis stroke="hsl(var(--foreground))" allowDecimals={false} />
+                                <Tooltip
+                                    cursor={{fill: 'hsl(var(--accent))'}}
+                                    content={<CustomTooltip />}
+                                />
+                                <Legend />
+                                <Line type="monotone" dataKey="wins" stroke="hsl(var(--primary))" name="Matches Completed" />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </CardContent>
+                </Card>
+            )}
+        </div>
+
 
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Match History</h2>
@@ -288,5 +345,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    
