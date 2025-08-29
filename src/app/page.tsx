@@ -29,6 +29,7 @@ import {
   Legend,
 } from 'recharts';
 import { TooltipProps } from 'recharts';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface PlayerWinData {
   name: string;
@@ -38,6 +39,11 @@ interface PlayerWinData {
 interface MonthlyWinData {
     month: string;
     wins: number;
+}
+
+interface PlayerScoreByMonthData {
+  month: string;
+  [key: string]: any; // Player names as keys
 }
 
 // Function to parse date from filename (YYYY-MM-DD, YYYYMMDD, etc.)
@@ -80,11 +86,22 @@ const reduceImageSize = (base64Str: string, maxWidth = 800, quality = 0.7): Prom
   });
 }
 
+const playerColors = [
+  'hsl(var(--primary))',
+  'hsl(var(--chart-2))',
+  'hsl(var(--chart-3))',
+  'hsl(var(--chart-4))',
+  'hsl(var(--chart-5))',
+];
+
+
 export default function DashboardPage() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [isMounted, setIsMounted] = useState(false);
   const [playerWinData, setPlayerWinData] = useState<PlayerWinData[]>([]);
   const [monthlyWinData, setMonthlyWinData] = useState<MonthlyWinData[]>([]);
+  const [playerScoreByMonthData, setPlayerScoreByMonthData] = useState<PlayerScoreByMonthData[]>([]);
+  const [allPlayers, setAllPlayers] = useState<string[]>([]);
   const [isTranslating, setIsTranslating] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [uploadedImagePreview, setUploadedImagePreview] = useState<string | null>(null);
@@ -110,13 +127,22 @@ export default function DashboardPage() {
 
     const playerStats: { [key: string]: { wins: number } } = {};
     const monthlyStats: { [key: string]: number } = {};
+    const monthlyPlayerScores: { [month: string]: { [player: string]: number } } = {};
+    const players = new Set<string>();
 
     allMatches.forEach(match => {
       const matchDate = parseISO(match.createdAt);
+      const monthKey = format(matchDate, 'yyyy-MM');
+      
+      players.add(match.player1Name);
+      players.add(match.player2Name);
+
+      if (!monthlyPlayerScores[monthKey]) {
+        monthlyPlayerScores[monthKey] = {};
+      }
       
       // Aggregate monthly stats
       if (match.status === 'ended') {
-          const monthKey = format(matchDate, 'MMM yyyy');
           if (!monthlyStats[monthKey]) {
               monthlyStats[monthKey] = 0;
           }
@@ -127,6 +153,13 @@ export default function DashboardPage() {
       if (!playerStats[match.player1Name]) playerStats[match.player1Name] = { wins: 0 };
       if (!playerStats[match.player2Name]) playerStats[match.player2Name] = { wins: 0 };
       
+      match.frames.forEach(frame => {
+          if (!monthlyPlayerScores[monthKey][match.player1Name]) monthlyPlayerScores[monthKey][match.player1Name] = 0;
+          if (!monthlyPlayerScores[monthKey][match.player2Name]) monthlyPlayerScores[monthKey][match.player2Name] = 0;
+          monthlyPlayerScores[monthKey][match.player1Name] += frame.player1Score;
+          monthlyPlayerScores[monthKey][match.player2Name] += frame.player2Score;
+      });
+
       if (match.status === 'ended') {
           let p1Wins = 0;
           let p2Wins = 0;
@@ -142,6 +175,9 @@ export default function DashboardPage() {
           }
       }
     });
+    
+    const uniquePlayers = Array.from(players);
+    setAllPlayers(uniquePlayers);
 
     const winData = Object.keys(playerStats)
       .map(name => ({
@@ -152,13 +188,24 @@ export default function DashboardPage() {
       
     const monthlyData = Object.keys(monthlyStats)
       .map(month => ({
-        month,
+        month: format(parseISO(month), 'MMM yyyy'),
         wins: monthlyStats[month],
       }))
-      .sort((a,b) => new Date(a.month).getTime() - new Date(b.month).getTime());
+      .sort((a,b) => parseISO(a.month).getTime() - parseISO(b.month).getTime());
+    
+    const scoreData = Object.keys(monthlyPlayerScores)
+      .map(month => {
+          const record: PlayerScoreByMonthData = { month: format(parseISO(month), 'MMM yyyy') };
+          uniquePlayers.forEach(p => {
+            record[p] = monthlyPlayerScores[month][p] || 0;
+          });
+          return record;
+      })
+      .sort((a,b) => parseISO(a.month).getTime() - parseISO(b.month).getTime());
 
     setPlayerWinData(winData);
     setMonthlyWinData(monthlyData);
+    setPlayerScoreByMonthData(scoreData);
   }
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -312,14 +359,21 @@ export default function DashboardPage() {
   const CustomTooltip = ({ active, payload, label }: TooltipProps<number, string>) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-card border p-2 rounded-md shadow-lg">
-          <p className="font-bold">{label}</p>
-          <p className="text-primary">{`${payload[0].name}: ${payload[0].value}`}</p>
+        <div className="bg-card border p-3 rounded-md shadow-lg text-sm">
+          <p className="font-bold mb-2">{label}</p>
+          {payload.map((p, i) => (
+            <div key={i} style={{ color: p.color }} className="flex justify-between gap-4">
+              <span>{p.name}:</span>
+              <span className="font-bold">{p.value}</span>
+            </div>
+          ))}
         </div>
       );
     }
     return null;
   };
+  
+  const hasData = matches.length > 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -330,55 +384,86 @@ export default function DashboardPage() {
         </Button>
       </Header>
       <main className="p-4 md:p-8 page-transition">
-        <div className="grid gap-8 mb-8 md:grid-cols-2">
-            {playerWinData.length > 0 && (
-            <Card>
-                <CardHeader>
-                <CardTitle>Player Leaderboard</CardTitle>
-                <CardDescription>An overview of player wins.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={playerWinData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="name" stroke="hsl(var(--foreground))" tick={{fontSize: 12}} />
-                    <YAxis stroke="hsl(var(--foreground))" allowDecimals={false} />
-                    <Tooltip
-                        cursor={{fill: 'hsl(var(--accent))'}}
-                        content={<CustomTooltip />}
-                    />
-                    <Legend />
-                    <Bar dataKey="wins" fill="hsl(var(--primary))" name="Matches Won" />
-                    </BarChart>
-                </ResponsiveContainer>
-                </CardContent>
-            </Card>
-            )}
-
-            {monthlyWinData.length > 0 && (
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Match Timeline</CardTitle>
-                        <CardDescription>Number of matches completed per month.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <ResponsiveContainer width="100%" height={300}>
-                            <LineChart data={monthlyWinData}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                                <XAxis dataKey="month" stroke="hsl(var(--foreground))" tick={{fontSize: 12}} />
-                                <YAxis stroke="hsl(var(--foreground))" allowDecimals={false} />
-                                <Tooltip
-                                    cursor={{fill: 'hsl(var(--accent))'}}
-                                    content={<CustomTooltip />}
-                                />
-                                <Legend />
-                                <Line type="monotone" dataKey="wins" stroke="hsl(var(--primary))" name="Matches Completed" />
-                            </LineChart>
-                        </ResponsiveContainer>
-                    </CardContent>
-                </Card>
-            )}
-        </div>
+        {hasData && (
+          <Tabs defaultValue="wins" className="mb-8">
+            <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 sm:w-auto">
+              <TabsTrigger value="wins">Player Wins</TabsTrigger>
+              <TabsTrigger value="timeline">Match Timeline</TabsTrigger>
+              <TabsTrigger value="scores">Player Scores</TabsTrigger>
+            </TabsList>
+            <TabsContent value="wins">
+              <Card>
+                  <CardHeader>
+                  <CardTitle>Player Leaderboard</CardTitle>
+                  <CardDescription>Total number of matches won by each player.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={playerWinData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="name" stroke="hsl(var(--foreground))" tick={{fontSize: 12}} />
+                      <YAxis stroke="hsl(var(--foreground))" allowDecimals={false} />
+                      <Tooltip
+                          cursor={{fill: 'hsl(var(--accent))'}}
+                          content={<CustomTooltip />}
+                      />
+                      <Legend />
+                      <Bar dataKey="wins" fill="hsl(var(--primary))" name="Matches Won" />
+                      </BarChart>
+                  </ResponsiveContainer>
+                  </CardContent>
+              </Card>
+            </TabsContent>
+            <TabsContent value="timeline">
+              <Card>
+                  <CardHeader>
+                      <CardTitle>Match Timeline</CardTitle>
+                      <CardDescription>Number of matches completed per month.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                      <ResponsiveContainer width="100%" height={300}>
+                          <LineChart data={monthlyWinData}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                              <XAxis dataKey="month" stroke="hsl(var(--foreground))" tick={{fontSize: 12}} />
+                              <YAxis stroke="hsl(var(--foreground))" allowDecimals={false} />
+                              <Tooltip
+                                  cursor={{fill: 'hsl(var(--accent))'}}
+                                  content={<CustomTooltip />}
+                              />
+                              <Legend />
+                              <Line type="monotone" dataKey="wins" stroke="hsl(var(--primary))" name="Matches Completed" />
+                          </LineChart>
+                      </ResponsiveContainer>
+                  </CardContent>
+              </Card>
+            </TabsContent>
+             <TabsContent value="scores">
+              <Card>
+                  <CardHeader>
+                      <CardTitle>Player Score Timeline</CardTitle>
+                      <CardDescription>Total points scored by each player per month.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                      <ResponsiveContainer width="100%" height={300}>
+                          <LineChart data={playerScoreByMonthData}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                              <XAxis dataKey="month" stroke="hsl(var(--foreground))" tick={{fontSize: 12}} />
+                              <YAxis stroke="hsl(var(--foreground))" />
+                              <Tooltip
+                                  cursor={{fill: 'hsl(var(--accent))'}}
+                                  content={<CustomTooltip />}
+                              />
+                              <Legend />
+                              {allPlayers.map((player, index) => (
+                                <Line key={player} type="monotone" dataKey={player} stroke={playerColors[index % playerColors.length]} name={player} />
+                              ))}
+                          </LineChart>
+                      </ResponsiveContainer>
+                  </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        )}
 
 
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
