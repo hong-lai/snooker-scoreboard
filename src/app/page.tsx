@@ -29,7 +29,6 @@ import { TooltipProps } from 'recharts';
 interface PlayerWinData {
   name: string;
   wins: number;
-  foulPoints: number;
 }
 
 export default function DashboardPage() {
@@ -47,15 +46,12 @@ export default function DashboardPage() {
     const allMatches = getMatches();
     setMatches(allMatches);
 
-    const playerStats: { [key: string]: { wins: number; foulPoints: number } } = {};
+    const playerStats: { [key: string]: { wins: number } } = {};
 
     allMatches.forEach(match => {
-      if (!playerStats[match.player1Name]) playerStats[match.player1Name] = { wins: 0, foulPoints: 0 };
-      if (!playerStats[match.player2Name]) playerStats[match.player2Name] = { wins: 0, foulPoints: 0 };
+      if (!playerStats[match.player1Name]) playerStats[match.player1Name] = { wins: 0 };
+      if (!playerStats[match.player2Name]) playerStats[match.player2Name] = { wins: 0 };
       
-      playerStats[match.player1Name].foulPoints += match.player1TotalFoulPoints || 0;
-      playerStats[match.player2Name].foulPoints += match.player2TotalFoulPoints || 0;
-
       if (match.status === 'ended') {
           let p1Wins = 0;
           let p2Wins = 0;
@@ -76,7 +72,6 @@ export default function DashboardPage() {
       .map(name => ({
         name,
         wins: playerStats[name].wins,
-        foulPoints: playerStats[name].foulPoints,
       }))
       .sort((a, b) => b.wins - a.wins);
 
@@ -172,7 +167,6 @@ export default function DashboardPage() {
         <div className="bg-card border p-2 rounded-md shadow-lg">
           <p className="font-bold">{label}</p>
           <p className="text-primary">{`Wins: ${payload[0].value}`}</p>
-          <p className="text-destructive">{`Total Foul Points: ${payload[1].value}`}</p>
         </div>
       );
     }
@@ -187,7 +181,7 @@ export default function DashboardPage() {
           <Card className="mb-8">
             <CardHeader>
               <CardTitle>Player Leaderboard</CardTitle>
-              <CardDescription>An overview of player wins and total foul points.</CardDescription>
+              <CardDescription>An overview of player wins.</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
@@ -201,7 +195,6 @@ export default function DashboardPage() {
                   />
                   <Legend />
                   <Bar dataKey="wins" fill="hsl(var(--primary))" name="Matches Won" />
-                  <Bar dataKey="foulPoints" fill="hsl(var(--destructive))" name="Total Foul Points" />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
