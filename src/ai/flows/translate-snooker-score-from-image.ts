@@ -48,19 +48,22 @@ const prompt = ai.definePrompt({
   name: 'translateSnookerScoreFromImagePrompt',
   input: {schema: TranslateSnookerScoreFromImageInputSchema},
   output: {schema: TranslateSnookerScoreFromImageOutputSchema},
-  prompt: `You are an AI expert at extracting snooker scores from images of handwritten scoreboards.
+  prompt: `You are an AI expert at extracting snooker scores from images of handwritten scoreboards. Your task is to extract the data with perfect accuracy.
 
-  Given an image of a snooker scoreboard, you must extract the information with extreme care and precision.
+  **EXTREMELY IMPORTANT RULE:** The physical order of the rows in the image is completely irrelevant. You **MUST** use the number inside the circle (e.g., ①, ②, ⑩) on each line as the one and only identifier for the \`frameNumber\`. If you process the rows from top to bottom, you will fail. You must identify the circled number for each row and use that for the frame number.
 
-  **Crucial Instructions:**
-  1.  **Frame Number:** The frame number is the number written inside a circle (e.g., ①, ②, ⑩). This is the most important piece of information for each row. You **MUST** correctly identify this number for every single frame. Do not assume the frames are listed in order in the image.
-  2.  **Player Names:** Player 1 is 'L'. Player 2 is 'Y'.
-  3.  **Frame Scores:** The scores are written in the format 'L-Y'. For example, '43-24' means L scored 43 and Y scored 24 for that frame. Be very careful reading the handwritten numbers.
-  4.  **Tags:** Identify any special symbol or 'tag' (like a star '☆' or a dot '•') next to a frame's score.
-  5.  **Foul Points:** Extract the total foul points for each player. This is the negative number under the player's name (e.g., -78 for L). The output value should be a positive number.
-  6.  **Irrelevant Info:** Ignore the final scores (e.g., 85 and 65) as they will be auto-calculated. Other text is irrelevant.
+  **Step-by-step extraction process:**
+  1.  **Identify All Frame Rows:** Look at every row that contains a score.
+  2.  **For EACH row, find the circled number first.** This is the \`frameNumber\`. For example, a row with ⑩ means \`frameNumber: 10\`.
+  3.  **Extract Player Scores:** For that same row, find the score in the 'L-Y' format. Be very careful reading the handwritten digits. '43-24' means \`player1Score: 43\` and \`player2Score: 24\`.
+  4.  **Extract Tag:** Look for any symbol like a star '☆' or a dot '•' on that row. This is the \`tag\`.
+  5.  **Assemble Frame Object:** Create a JSON object for that frame, e.g., \`{ "frameNumber": 10, "player1Score": 10, "player2Score": 46, "tag": "☆" }\`.
+  6.  **Repeat for ALL rows.**
+  7.  **Extract Player Names:** Player 1 is 'L'. Player 2 is 'Y'.
+  8.  **Extract Foul Points:** Find the total foul points for each player. This is the negative number below the player's name (e.g., -78 for L). The output value must be a positive number.
+  9.  **Ignore Other Text:** All other text, including the large final scores (like 85 and 65), is irrelevant and must be ignored.
 
-  Return the data in the specified JSON format. The frames array must contain every frame found in the image.
+  You must return a JSON object containing the player data and an array of frame objects. The array must contain every single frame found in the image.
 
   Here is the image of the snooker scoreboard: {{media url=photoDataUri}}
   `,
