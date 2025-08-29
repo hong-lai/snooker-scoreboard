@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { useToast } from '@/hooks/use-toast';
 import { translateSnookerScoreFromImage } from '@/ai/flows/translate-snooker-score-from-image';
 import { verifySnookerScoreEntry } from '@/ai/flows/verify-snooker-score-entry';
-import { Camera, Loader2, Save, Trophy } from 'lucide-react';
+import { Camera, Loader2, Save, Trophy, Star } from 'lucide-react';
 import Image from 'next/image';
 
 interface MatchBoardProps {
@@ -20,7 +20,7 @@ interface MatchBoardProps {
 
 export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
   const [match, setMatch] = useState(initialMatch);
-  const [newFrame, setNewFrame] = useState({ p1Score: '', p1Foul: '', p2Score: '', p2Foul: '' });
+  const [newFrame, setNewFrame] = useState({ p1Score: '', p2Score: '' });
   const [isSaving, setIsSaving] = useState(false);
   const [isTranslating, setIsTranslating] = useState(false);
   const [isEndingMatch, setIsEndingMatch] = useState(false);
@@ -38,15 +38,11 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
   const handleSaveFrame = async () => {
     setIsSaving(true);
     const p1s = parseInt(newFrame.p1Score) || 0;
-    const p1f = parseInt(newFrame.p1Foul) || 0;
     const p2s = parseInt(newFrame.p2Score) || 0;
-    const p2f = parseInt(newFrame.p2Foul) || 0;
 
     const verificationResult = await verifySnookerScoreEntry({
       player1Score: p1s,
-      player1FoulPoints: p1f,
       player2Score: p2s,
-      player2FoulPoints: p2f,
     });
 
     if (!verificationResult.isValid) {
@@ -61,15 +57,13 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
 
     const frame: Frame = {
       player1Score: p1s,
-      player1FoulPoints: p1f,
       player2Score: p2s,
-      player2FoulPoints: p2f,
     };
 
     const updatedMatch = { ...match, frames: [...match.frames, frame] };
     updateMatch(updatedMatch);
     setMatch(updatedMatch);
-    setNewFrame({ p1Score: '', p1Foul: '', p2Score: '', p2Foul: '' });
+    setNewFrame({ p1Score: '', p2Score: '' });
     onUpdate();
     setIsSaving(false);
   };
@@ -103,12 +97,18 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
       const result = await translateSnookerScoreFromImage({ photoDataUri: uploadedImage });
       const newFrames: Frame[] = result.frames.map(f => ({
           player1Score: f.player1Score,
-          player1FoulPoints: f.player1FoulPoints,
           player2Score: f.player2Score,
-          player2FoulPoints: f.player2FoulPoints
+          tag: f.tag,
       }));
       
-      const updatedMatch = { ...match, frames: [...match.frames, ...newFrames] };
+      const updatedMatch = { 
+        ...match, 
+        player1Name: result.player1Name,
+        player2Name: result.player2Name,
+        player1TotalFoulPoints: (match.player1TotalFoulPoints || 0) + result.player1TotalFoulPoints,
+        player2TotalFoulPoints: (match.player2TotalFoulPoints || 0) + result.player2TotalFoulPoints,
+        frames: [...match.frames, ...newFrames],
+      };
       updateMatch(updatedMatch);
       setMatch(updatedMatch);
       onUpdate();
@@ -192,6 +192,7 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
             <TableRow>
               <TableHead className="w-[50px] text-center">Frame</TableHead>
               <TableHead colSpan={3} className="text-center w-full">{match.player1Name} vs {match.player2Name}</TableHead>
+              <TableHead className="w-[50px] text-center">Tag</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -200,31 +201,27 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
                 <TableCell className="font-medium text-center">{index + 1}</TableCell>
                 <TableCell className="text-right">
                   <span className={frame.player1Score > frame.player2Score ? 'font-bold' : ''}>{frame.player1Score}</span>
-                  {frame.player1FoulPoints > 0 && <span className="text-destructive/80 ml-1">({frame.player1FoulPoints})</span>}
                 </TableCell>
                 <TableCell className="text-center w-[20px]">-</TableCell>
                 <TableCell className="text-left">
                   <span className={frame.player2Score > frame.player1Score ? 'font-bold' : ''}>{frame.player2Score}</span>
-                  {frame.player2FoulPoints > 0 && <span className="text-destructive/80 ml-1">({frame.player2FoulPoints})</span>}
+                </TableCell>
+                <TableCell className="text-center">
+                  {frame.tag && <Star className="h-4 w-4 text-yellow-500" title={frame.tag} />}
                 </TableCell>
               </TableRow>
             ))}
             {match.status === 'playing' && (
               <TableRow>
                 <TableCell className="font-medium text-center">{match.frames.length + 1}</TableCell>
-                <TableCell className="text-right">
-                  <div className="flex items-center justify-end gap-1">
-                    <Input name="p1Score" value={newFrame.p1Score} onChange={handleInputChange} className="w-20 h-8 text-right" placeholder="Score"/>
-                    <Input name="p1Foul" value={newFrame.p1Foul} onChange={handleInputChange} className="w-16 h-8 text-right" placeholder="Foul"/>
+                <TableCell className="text-right" colSpan={3}>
+                  <div className="flex items-center justify-center gap-1">
+                    <Input name="p1Score" value={newFrame.p1Score} onChange={handleInputChange} className="w-24 h-8 text-right" placeholder="Player 1 Score"/>
+                    <span className="mx-2">vs</span>
+                    <Input name="p2Score" value={newFrame.p2Score} onChange={handleInputChange} className="w-24 h-8" placeholder="Player 2 Score"/>
                   </div>
                 </TableCell>
-                <TableCell className="text-center w-[20px]">-</TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-1">
-                    <Input name="p2Score" value={newFrame.p2Score} onChange={handleInputChange} className="w-20 h-8" placeholder="Score"/>
-                    <Input name="p2Foul" value={newFrame.p2Foul} onChange={handleInputChange} className="w-16 h-8" placeholder="Foul"/>
-                  </div>
-                </TableCell>
+                <TableCell />
               </TableRow>
             )}
           </TableBody>
@@ -244,3 +241,4 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
       )}
     </Card>
   );
+}

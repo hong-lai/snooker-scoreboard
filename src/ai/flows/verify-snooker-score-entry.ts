@@ -13,8 +13,6 @@ import {z} from 'genkit';
 const VerifySnookerScoreEntryInputSchema = z.object({
   player1Score: z.number().describe('Player 1 score for the frame.'),
   player2Score: z.number().describe('Player 2 score for the frame.'),
-  player1FoulPoints: z.number().describe('Player 1 foul points for the frame.'),
-  player2FoulPoints: z.number().describe('Player 2 foul points for the frame.'),
 });
 export type VerifySnookerScoreEntryInput = z.infer<
   typeof VerifySnookerScoreEntryInputSchema
@@ -49,13 +47,10 @@ const verifySnookerScoreEntryPrompt = ai.definePrompt({
 
   Player 1 Score: {{{player1Score}}}
   Player 2 Score: {{{player2Score}}}
-  Player 1 Foul Points: {{{player1FoulPoints}}}
-  Player 2 Foul Points: {{{player2FoulPoints}}}
 
   Considerations:
   - The maximum break in snooker is 147.
   - Standard snooker rules apply.
-  - The foul points given to the player can not be more than the score.
   - If a player's score is more than 147, it is likely an invalid score.
 
   Output should be in JSON format.

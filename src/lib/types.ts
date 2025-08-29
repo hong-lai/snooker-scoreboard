@@ -1,8 +1,7 @@
 export interface Frame {
   player1Score: number;
-  player1FoulPoints: number;
   player2Score: number;
-  player2FoulPoints: number;
+  tag?: string;
 }
 
 export interface Match {
@@ -10,6 +9,8 @@ export interface Match {
   player1Name: string;
   player2Name:string;
   frames: Frame[];
+  player1TotalFoulPoints: number;
+  player2TotalFoulPoints: number;
   status: 'playing' | 'ended';
   createdAt: string;
 }

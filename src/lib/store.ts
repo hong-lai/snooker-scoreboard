@@ -11,7 +11,19 @@ const getInitialMatches = (): Match[] => {
 
   const storedMatches = localStorage.getItem(STORE_KEY);
   if (storedMatches) {
-    return JSON.parse(storedMatches);
+    try {
+      const parsed = JSON.parse(storedMatches);
+      // Basic validation to ensure it's an array
+      if (Array.isArray(parsed)) {
+        return parsed.map(m => ({
+          ...m,
+          player1TotalFoulPoints: m.player1TotalFoulPoints || 0,
+          player2TotalFoulPoints: m.player2TotalFoulPoints || 0,
+        }))
+      }
+    } catch (e) {
+      // If parsing fails, fall back to seeding
+    }
   }
 
   // Seed with mock data if no data exists
@@ -21,10 +33,12 @@ const getInitialMatches = (): Match[] => {
       player1Name: 'Ronnie O\'Sullivan',
       player2Name: 'Judd Trump',
       frames: [
-        { player1Score: 65, player1FoulPoints: 12, player2Score: 45, player2FoulPoints: 4 },
-        { player1Score: 40, player1FoulPoints: 0, player2Score: 75, player2FoulPoints: 2 },
-        { player1Score: 82, player1FoulPoints: 0, player2Score: 12, player2FoulPoints: 0 },
+        { player1Score: 65, player2Score: 45 },
+        { player1Score: 40, player2Score: 75 },
+        { player1Score: 82, player2Score: 12 },
       ],
+      player1TotalFoulPoints: 12,
+      player2TotalFoulPoints: 6,
       status: 'ended',
       createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
     },
@@ -33,9 +47,11 @@ const getInitialMatches = (): Match[] => {
       player1Name: 'John Higgins',
       player2Name: 'Mark Selby',
       frames: [
-        { player1Score: 55, player1FoulPoints: 4, player2Score: 68, player2FoulPoints: 8 },
-        { player1Score: 102, player1FoulPoints: 0, player2Score: 5, player2FoulPoints: 0 },
+        { player1Score: 55, player2Score: 68 },
+        { player1Score: 102, player2Score: 5 },
       ],
+      player1TotalFoulPoints: 4,
+      player2TotalFoulPoints: 8,
       status: 'playing',
       createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
     },
@@ -64,6 +80,8 @@ export const createMatch = (player1Name: string, player2Name: string): Match => 
     player1Name,
     player2Name,
     frames: [],
+    player1TotalFoulPoints: 0,
+    player2TotalFoulPoints: 0,
     status: 'playing',
     createdAt: new Date().toISOString(),
   };
