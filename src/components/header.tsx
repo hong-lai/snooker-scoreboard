@@ -1,0 +1,17 @@
+import Link from 'next/link';
+import { Trophy } from 'lucide-react';
+
+export function Header() {
+  return (
+    <header className="bg-primary text-primary-foreground">
+      <div className="container mx-auto flex items-center justify-between p-4">
+        <Link href="/" className="flex items-center gap-2">
+          <Trophy className="h-7 w-7" />
+          <h1 className="text-xl font-bold tracking-tight">
+            SnookerScoreMate
+          </h1>
+        </Link>
+      </div>
+    </header>
+  );
+}
