@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 import { translateSnookerScoreFromImage } from '@/ai/flows/translate-snooker-score-from-image';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, isWithinInterval } from 'date-fns';
 import JSZip from 'jszip';
 import {
   Bar,
@@ -54,6 +54,11 @@ interface MonthlyWinData {
 interface PlayerScoreByMonthData {
   month: string;
   [key: string]: any; // Player names as keys
+}
+
+interface BestPlayData {
+  name: string;
+  bestPlay: number;
 }
 
 type TimePeriod = 'month' | 'year';
@@ -117,6 +122,7 @@ export default function DashboardPage() {
   const [playerWinData, setPlayerWinData] = useState<PlayerWinData[]>([]);
   const [monthlyMatchData, setMonthlyMatchData] = useState<MonthlyWinData[]>([]);
   const [playerScoreByMonthData, setPlayerScoreByMonthData] = useState<PlayerScoreByMonthData[]>([]);
+  const [bestPlayData, setBestPlayData] = useState<BestPlayData[]>([]);
   const [allPlayers, setAllPlayers] = useState<string[]>([]);
   const [isTranslating, setIsTranslating] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -139,6 +145,7 @@ export default function DashboardPage() {
             [player: string]: { totalScore: number, frameCount: number } 
         } 
     } = {};
+    const playerBestPlays: { [key: string]: number } = {};
 
     const players = new Set<string>();
     const timeFormat = period === 'month' ? 'yyyy-MM' : 'yyyy';
@@ -150,6 +157,9 @@ export default function DashboardPage() {
       
       players.add(match.player1Name);
       players.add(match.player2Name);
+
+      if (!playerBestPlays[match.player1Name]) playerBestPlays[match.player1Name] = 0;
+      if (!playerBestPlays[match.player2Name]) playerBestPlays[match.player2Name] = 0;
 
       if (!periodPlayerScores[periodKey]) {
         periodPlayerScores[periodKey] = {};
@@ -180,21 +190,31 @@ export default function DashboardPage() {
 
           periodPlayerScores[periodKey][match.player2Name].totalScore += frame.player2Score;
           periodPlayerScores[periodKey][match.player2Name].frameCount++;
-      });
-
-      if (match.status === 'ended') {
-          let p1Wins = 0;
-          let p2Wins = 0;
-          match.frames.forEach(frame => {
-            if (frame.player1Score > frame.player2Score) p1Wins++;
-            else if (frame.player2Score > frame.player1Score) p2Wins++;
-          });
-
-          if (p1Wins > p2Wins) {
-            playerStats[match.player1Name].wins += 1;
-          } else if (p2Wins > p1Wins) {
-            playerStats[match.player2Name].wins += 1;
+          
+          if (isWithinInterval(matchDate, { start: parseISO(periodKey), end: new Date() })) {
+            if (frame.player1Score > playerBestPlays[match.player1Name]) {
+                playerBestPlays[match.player1Name] = frame.player1Score;
+            }
+            if (frame.player2Score > playerBestPlays[match.player2Name]) {
+                playerBestPlays[match.player2Name] = frame.player2Score;
+            }
           }
+      });
+      
+      const currentPeriodKey = format(new Date(), timeFormat);
+      if (periodKey === currentPeriodKey && match.status === 'ended') {
+        let p1Wins = 0;
+        let p2Wins = 0;
+        match.frames.forEach(frame => {
+          if (frame.player1Score > frame.player2Score) p1Wins++;
+          else if (frame.player2Score > frame.player1Score) p2Wins++;
+        });
+
+        if (p1Wins > p2Wins) {
+          playerStats[match.player1Name].wins += 1;
+        } else if (p2Wins > p1Wins) {
+          playerStats[match.player2Name].wins += 1;
+        }
       }
     });
     
@@ -231,9 +251,17 @@ export default function DashboardPage() {
         })
         .sort((a,b) => new Date(a.month).getTime() - new Date(b.month).getTime());
 
+    const bestPlayChartData = Object.keys(playerBestPlays)
+        .map(name => ({
+            name,
+            bestPlay: playerBestPlays[name],
+        }))
+        .sort((a, b) => b.bestPlay - a.bestPlay);
+    
     setPlayerWinData(winData);
     setMonthlyMatchData(monthlyData);
     setPlayerScoreByMonthData(scoreData);
+    setBestPlayData(bestPlayChartData);
     setIsLoading(false);
   }, [user]);
 
@@ -473,6 +501,7 @@ export default function DashboardPage() {
                     <TabsTrigger value="timeline">Match Timeline</TabsTrigger>
                     <TabsTrigger value="activity">Match Activity</TabsTrigger>
                     <TabsTrigger value="scores">Player Performance</TabsTrigger>
+                    <TabsTrigger value="best_play">Best Play</TabsTrigger>
                 </TabsList>
                  <div className="flex items-center space-x-2 sm:ml-auto">
                     <Label htmlFor="time-period-switch">Year</Label>
@@ -488,7 +517,7 @@ export default function DashboardPage() {
               <Card>
                   <CardHeader>
                   <CardTitle>Player Rankings</CardTitle>
-                  <CardDescription>Total number of frames won by each player across all matches.</CardDescription>
+                  <CardDescription>Total number of frames won by each player for the selected period.</CardDescription>
                   </CardHeader>
                   <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
@@ -575,6 +604,29 @@ export default function DashboardPage() {
                               ))}
                           </LineChart>
                       </ResponsiveContainer>
+                  </CardContent>
+              </Card>
+            </TabsContent>
+            <TabsContent value="best_play">
+              <Card>
+                  <CardHeader>
+                  <CardTitle>Best Play</CardTitle>
+                  <CardDescription>Highest single frame score by each player for the selected {timePeriod}.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={bestPlayData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="name" stroke="hsl(var(--foreground))" tick={{fontSize: 12}} />
+                      <YAxis stroke="hsl(var(--foreground))" allowDecimals={false} />
+                      <Tooltip
+                          cursor={{ fill: 'transparent' }}
+                          content={<CustomTooltip />}
+                      />
+                      <Legend />
+                      <Bar dataKey="bestPlay" fill="hsl(var(--chart-2))" name="Best Play" />
+                      </BarChart>
+                  </ResponsiveContainer>
                   </CardContent>
               </Card>
             </TabsContent>
