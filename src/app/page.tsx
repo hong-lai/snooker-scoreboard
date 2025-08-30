@@ -9,7 +9,7 @@ import { MatchCard } from '@/components/match-card';
 import type { Match, Frame } from '@/lib/types';
 import { getMatches, createMatch, updateMatch, deleteMatch } from '@/lib/store';
 import { useAuth } from '@/hooks/use-auth';
-import { Plus, Camera, Loader2, Star, Circle, LogOut, Upload, User as UserIcon } from 'lucide-react';
+import { Plus, Camera, Loader2, Star, Circle, LogOut, Upload, User as UserIcon, ArrowRight } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -68,6 +68,7 @@ interface BestPlayTableData {
   player: string;
   frame: string;
   score: number;
+  matchId: string;
 }
 
 type TimePeriod = 'month' | 'year';
@@ -203,6 +204,7 @@ export default function DashboardPage() {
                   player: match.player1Name,
                   frame: `${frame.player1Score}-${frame.player2Score}`,
                   score: frame.player1Score,
+                  matchId: match.id,
               });
           } else if (frame.player2Score > frame.player1Score) {
               allBestPlays.push({
@@ -210,6 +212,7 @@ export default function DashboardPage() {
                   player: match.player2Name,
                   frame: `${frame.player2Score}-${frame.player1Score}`,
                   score: frame.player2Score,
+                  matchId: match.id,
               });
           }
       });
@@ -642,7 +645,14 @@ export default function DashboardPage() {
                       {bestPlaysTableData.length > 0 ? (
                         bestPlaysTableData.map((play, index) => (
                           <TableRow key={index}>
-                            <TableCell>{play.date}</TableCell>
+                            <TableCell>
+                               <Button asChild variant="link" className="p-0 h-auto font-normal">
+                                    <Link href={`/match/${play.matchId}`}>
+                                      {play.date}
+                                      <ArrowRight className="ml-2 h-4 w-4" />
+                                    </Link>
+                                </Button>
+                            </TableCell>
                             <TableCell className="font-medium">{play.player}</TableCell>
                             <TableCell className="text-right font-code">{play.frame}</TableCell>
                           </TableRow>
@@ -740,5 +750,7 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
 
     
