@@ -246,7 +246,7 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
           </UITableFooter>
         </Table>
       </CardContent>
-      <CardFooter className="flex-col sm:flex-row gap-2">
+      <CardFooter className="flex gap-2">
       <TooltipProvider>
         {match.scoreboardImage && (
             <Dialog>
