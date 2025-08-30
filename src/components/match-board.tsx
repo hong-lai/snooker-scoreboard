@@ -292,7 +292,6 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
       </CardHeader>
       <CardContent className="px-2 sm:px-6">
         <Table>
-          <TableCaption>A list of all frames in the match.</TableCaption>
           <TableHeader>
             <TableRow>
               <TableHead className="w-[50px] text-center">Frame</TableHead>
@@ -304,16 +303,16 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
           <TableBody>
             {editedFrames.map((frame, index) => (
               <TableRow key={index} className={frame.player1Score > frame.player2Score ? 'bg-primary/5' : frame.player2Score > frame.player1Score ? 'bg-accent/5' : ''}>
-                <TableCell className="font-medium text-center">{index + 1}</TableCell>
+                <TableCell className="font-medium">{index + 1}</TableCell>
                  {isEditing ? (
                     <>
-                    <TableCell className="text-right p-1">
-                      <Input value={frame.player1Score} onChange={(e) => handleFrameChange(index, 'player1Score', e.target.value)} className="w-20 h-8 text-right mx-auto" autoComplete="off"/>
-                    </TableCell>
-                    <TableCell className="text-center w-[20px] p-1">-</TableCell>
-                    <TableCell className="text-left p-1">
-                       <Input value={frame.player2Score} onChange={(e) => handleFrameChange(index, 'player2Score', e.target.value)} className="w-20 h-8" autoComplete="off"/>
-                    </TableCell>
+                      <TableCell className="text-right p-1">
+                        <Input value={frame.player1Score} onChange={(e) => handleFrameChange(index, 'player1Score', e.target.value)} className="w-20 h-8 text-right mx-auto" autoComplete="off"/>
+                      </TableCell>
+                      <TableCell className="text-center w-[20px] p-1">-</TableCell>
+                      <TableCell className="text-left p-1">
+                        <Input value={frame.player2Score} onChange={(e) => handleFrameChange(index, 'player2Score', e.target.value)} className="w-20 h-8" autoComplete="off"/>
+                      </TableCell>
                     </>
                  ) : (
                     <>
@@ -359,11 +358,11 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
             {!isViewMode && (
                 <TableRow>
                     <TableCell className="font-medium text-center">{editedFrames.length + 1}</TableCell>
-                    <TableCell className="text-right" colSpan={isEditing ? 4 : 3}>
+                    <TableCell className="text-center" colSpan={isEditing ? 4 : 3}>
                         <div className="flex items-center justify-center gap-1">
-                        <Input name="p1Score" value={newFrame.p1Score} onChange={handleInputChange} className="w-24 h-8 text-right" placeholder="P1 Score" autoComplete="off"/>
-                        <span className="mx-2">vs</span>
-                        <Input name="p2Score" value={newFrame.p2Score} onChange={handleInputChange} className="w-24 h-8" placeholder="P2 Score" autoComplete="off"/>
+                          <Input name="p1Score" value={newFrame.p1Score} onChange={handleInputChange} className="w-24 h-8 text-right" placeholder="P1 Score" autoComplete="off"/>
+                          <span className="mx-2">vs</span>
+                          <Input name="p2Score" value={newFrame.p2Score} onChange={handleInputChange} className="w-24 h-8" placeholder="P2 Score" autoComplete="off"/>
                         </div>
                     </TableCell>
                     <TableCell />
