@@ -36,6 +36,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 
 
 interface PlayerWinData {
@@ -53,6 +55,8 @@ interface PlayerScoreByMonthData {
   month: string;
   [key: string]: any; // Player names as keys
 }
+
+type TimePeriod = 'month' | 'year';
 
 const parseDateFromFilename = (filename: string): Date | null => {
     const regex = /(\d{4})[-_]?(\d{2})[-_]?(\d{2})/;
@@ -105,6 +109,7 @@ export default function DashboardPage() {
   const { user, loading } = useAuth();
   const [matches, setMatches] = useState<Match[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [timePeriod, setTimePeriod] = useState<TimePeriod>('month');
   const [playerWinData, setPlayerWinData] = useState<PlayerWinData[]>([]);
   const [monthlyMatchData, setMonthlyMatchData] = useState<MonthlyWinData[]>([]);
   const [playerScoreByMonthData, setPlayerScoreByMonthData] = useState<PlayerScoreByMonthData[]>([]);
@@ -117,58 +122,60 @@ export default function DashboardPage() {
   const { toast } = useToast();
   const router = useRouter();
 
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (period: TimePeriod) => {
     if (!user) return;
     setIsLoading(true);
     const allMatches = await getMatches(user.uid);
     setMatches(allMatches);
 
     const playerStats: { [key: string]: { wins: number } } = {};
-    const monthlyStats: { [month: string]: { totalFrames: number, matchCount: number } } = {};
-    const monthlyPlayerScores: { 
-        [month: string]: { 
+    const periodStats: { [key: string]: { totalFrames: number, matchCount: number } } = {};
+    const periodPlayerScores: { 
+        [key: string]: { 
             [player: string]: { totalScore: number, frameCount: number } 
         } 
     } = {};
 
     const players = new Set<string>();
+    const timeFormat = period === 'month' ? 'yyyy-MM' : 'yyyy';
+    const displayFormat = period === 'month' ? 'MMM yyyy' : 'yyyy';
 
     allMatches.forEach(match => {
       const matchDate = parseISO(match.createdAt);
-      const monthKey = format(matchDate, 'yyyy-MM');
+      const periodKey = format(matchDate, timeFormat);
       
       players.add(match.player1Name);
       players.add(match.player2Name);
 
-      if (!monthlyPlayerScores[monthKey]) {
-        monthlyPlayerScores[monthKey] = {};
+      if (!periodPlayerScores[periodKey]) {
+        periodPlayerScores[periodKey] = {};
       }
       
-      if (!monthlyStats[monthKey]) {
-          monthlyStats[monthKey] = { totalFrames: 0, matchCount: 0 };
+      if (!periodStats[periodKey]) {
+          periodStats[periodKey] = { totalFrames: 0, matchCount: 0 };
       }
       
       if (match.status === 'ended') {
-          monthlyStats[monthKey].matchCount++;
+          periodStats[periodKey].matchCount++;
       }
-      monthlyStats[monthKey].totalFrames += match.frames.length;
+      periodStats[periodKey].totalFrames += match.frames.length;
 
       if (!playerStats[match.player1Name]) playerStats[match.player1Name] = { wins: 0 };
       if (!playerStats[match.player2Name]) playerStats[match.player2Name] = { wins: 0 };
       
       match.frames.forEach(frame => {
-          if (!monthlyPlayerScores[monthKey][match.player1Name]) {
-            monthlyPlayerScores[monthKey][match.player1Name] = { totalScore: 0, frameCount: 0 };
+          if (!periodPlayerScores[periodKey][match.player1Name]) {
+            periodPlayerScores[periodKey][match.player1Name] = { totalScore: 0, frameCount: 0 };
           }
-          if (!monthlyPlayerScores[monthKey][match.player2Name]) {
-            monthlyPlayerScores[monthKey][match.player2Name] = { totalScore: 0, frameCount: 0 };
+          if (!periodPlayerScores[periodKey][match.player2Name]) {
+            periodPlayerScores[periodKey][match.player2Name] = { totalScore: 0, frameCount: 0 };
           }
 
-          monthlyPlayerScores[monthKey][match.player1Name].totalScore += frame.player1Score;
-          monthlyPlayerScores[monthKey][match.player1Name].frameCount++;
+          periodPlayerScores[periodKey][match.player1Name].totalScore += frame.player1Score;
+          periodPlayerScores[periodKey][match.player1Name].frameCount++;
 
-          monthlyPlayerScores[monthKey][match.player2Name].totalScore += frame.player2Score;
-          monthlyPlayerScores[monthKey][match.player2Name].frameCount++;
+          periodPlayerScores[periodKey][match.player2Name].totalScore += frame.player2Score;
+          periodPlayerScores[periodKey][match.player2Name].frameCount++;
       });
 
       if (match.status === 'ended') {
@@ -197,19 +204,19 @@ export default function DashboardPage() {
       }))
       .sort((a, b) => b.wins - a.wins);
       
-    const monthlyData = Object.keys(monthlyStats)
+    const monthlyData = Object.keys(periodStats)
       .map(month => ({
-        month: format(parseISO(month), 'MMM yyyy'),
-        avgFrames: monthlyStats[month].matchCount > 0 ? parseFloat((monthlyStats[month].totalFrames / monthlyStats[month].matchCount).toFixed(1)) : 0,
-        totalFrames: monthlyStats[month].totalFrames,
+        month: format(parseISO(month), displayFormat),
+        avgFrames: periodStats[month].matchCount > 0 ? parseFloat((periodStats[month].totalFrames / periodStats[month].matchCount).toFixed(1)) : 0,
+        totalFrames: periodStats[month].totalFrames,
       }))
       .sort((a,b) => new Date(a.month).getTime() - new Date(b.month).getTime());
     
-    const scoreData = Object.keys(monthlyPlayerScores)
+    const scoreData = Object.keys(periodPlayerScores)
         .map(month => {
-            const record: PlayerScoreByMonthData = { month: format(parseISO(month), 'MMM yyyy') };
+            const record: PlayerScoreByMonthData = { month: format(parseISO(month), displayFormat) };
             uniquePlayers.forEach(player => {
-                const playerData = monthlyPlayerScores[month][player];
+                const playerData = periodPlayerScores[month][player];
                 if (playerData && playerData.frameCount > 0) {
                     record[player] = parseFloat((playerData.totalScore / playerData.frameCount).toFixed(1));
                 } else {
@@ -234,9 +241,9 @@ export default function DashboardPage() {
   
   useEffect(() => {
     if (user) {
-      loadData();
+      loadData(timePeriod);
     }
-  }, [user, loadData]);
+  }, [user, timePeriod, loadData]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -306,7 +313,7 @@ export default function DashboardPage() {
       setUploadedImagePreview(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
       document.getElementById('close-upload-dialog')?.click();
-      loadData();
+      loadData(timePeriod);
     }
   };
 
@@ -363,7 +370,7 @@ export default function DashboardPage() {
       setIsTranslating(false);
       if (batchInputRef.current) batchInputRef.current.value = '';
       dismiss();
-      loadData();
+      loadData(timePeriod);
     }
   };
 
@@ -371,7 +378,7 @@ export default function DashboardPage() {
     if (!user) return;
     try {
         await deleteMatch(user.uid, id);
-        loadData();
+        loadData(timePeriod);
         toast({
             title: "Match Deleted",
             description: "The match has been successfully removed."
@@ -463,14 +470,25 @@ export default function DashboardPage() {
       <main className="p-4 md:p-8 page-transition">
         {hasData && (
           <Tabs defaultValue="wins" className="mb-8">
-            <ScrollArea className="w-full whitespace-nowrap rounded-lg">
-                <TabsList className="inline-flex w-max">
-                    <TabsTrigger value="wins">Player Rankings</TabsTrigger>
-                    <TabsTrigger value="timeline">Match Timeline</TabsTrigger>
-                    <TabsTrigger value="activity">Match Activity</TabsTrigger>
-                    <TabsTrigger value="scores">Player Performance</TabsTrigger>
-                </TabsList>
-            </ScrollArea>
+            <div className="flex justify-between items-center mb-2">
+                <ScrollArea className="w-full whitespace-nowrap rounded-lg">
+                    <TabsList className="inline-flex w-max">
+                        <TabsTrigger value="wins">Player Rankings</TabsTrigger>
+                        <TabsTrigger value="timeline">Match Timeline</TabsTrigger>
+                        <TabsTrigger value="activity">Match Activity</TabsTrigger>
+                        <TabsTrigger value="scores">Player Performance</TabsTrigger>
+                    </TabsList>
+                </ScrollArea>
+                 <div className="flex items-center space-x-2 ml-4">
+                    <Label htmlFor="time-period-switch">Year</Label>
+                    <Switch
+                        id="time-period-switch"
+                        checked={timePeriod === 'month'}
+                        onCheckedChange={(checked) => setTimePeriod(checked ? 'month' : 'year')}
+                    />
+                    <Label htmlFor="time-period-switch">Month</Label>
+                 </div>
+            </div>
             <TabsContent value="wins">
               <Card>
                   <CardHeader>
@@ -498,7 +516,7 @@ export default function DashboardPage() {
               <Card>
                   <CardHeader>
                       <CardTitle>Match Timeline</CardTitle>
-                      <CardDescription>Average frames played per match each month.</CardDescription>
+                      <CardDescription>Average frames played per match each {timePeriod}.</CardDescription>
                   </CardHeader>
                   <CardContent>
                       <ResponsiveContainer width="100%" height={300}>
@@ -521,7 +539,7 @@ export default function DashboardPage() {
               <Card>
                   <CardHeader>
                       <CardTitle>Match Activity</CardTitle>
-                      <CardDescription>Total frames played per month.</CardDescription>
+                      <CardDescription>Total frames played per {timePeriod}.</CardDescription>
                   </CardHeader>
                   <CardContent>
                       <ResponsiveContainer width="100%" height={300}>
@@ -544,7 +562,7 @@ export default function DashboardPage() {
               <Card>
                   <CardHeader>
                       <CardTitle>Player Performance Timeline</CardTitle>
-                      <CardDescription>Average points scored per frame by each player per month.</CardDescription>
+                      <CardDescription>Average points scored per frame by each player per {timePeriod}.</CardDescription>
                   </CardHeader>
                   <CardContent>
                       <ResponsiveContainer width="100%" height={300}>
