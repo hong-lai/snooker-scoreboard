@@ -189,30 +189,32 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
   return (
     <Card>
       <CardHeader className="text-center">
-        <div className="flex justify-between items-start relative">
+        <div className="flex justify-between items-start">
             <div className="flex-1 text-center">
-                <CardTitle className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                  {isEditingNames ? (
-                    <>
-                     <Input value={editedNames.p1Name} name="p1Name" onChange={handleNameChange} className="text-2xl md:text-3xl font-bold h-12 text-center" />
-                      <span className="text-xl md:text-2xl text-muted-foreground">vs</span>
-                     <Input value={editedNames.p2Name} name="p2Name" onChange={handleNameChange} className="text-2xl md:text-3xl font-bold h-12 text-center" />
-                     <Button onClick={handleSaveNamesAndFouls} size="icon"><Check /></Button>
-                     <Button onClick={() => setIsEditingNames(false)} size="icon" variant="ghost"><X/></Button>
-                    </>
-                  ) : (
-                    <>
-                      <span className="text-2xl md:text-3xl font-bold truncate">{match.player1Name}</span>
-                      <span className="text-xl md:text-2xl text-muted-foreground">vs</span>
-                      <span className="text-2xl md:text-3xl font-bold truncate">{match.player2Name}</span>
-                      <Button onClick={() => setIsEditingNames(true)} size="icon" variant="ghost" className="ml-2"><Edit/></Button>
-                    </>
-                  )}
-                </CardTitle>
+                <div className="flex items-center justify-center">
+                  <CardTitle className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                    {isEditingNames ? (
+                      <>
+                      <Input value={editedNames.p1Name} name="p1Name" onChange={handleNameChange} className="text-2xl md:text-3xl font-bold h-12 text-center" />
+                        <span className="text-xl md:text-2xl text-muted-foreground">vs</span>
+                      <Input value={editedNames.p2Name} name="p2Name" onChange={handleNameChange} className="text-2xl md:text-3xl font-bold h-12 text-center" />
+                      <Button onClick={handleSaveNamesAndFouls} size="icon"><Check /></Button>
+                      <Button onClick={() => setIsEditingNames(false)} size="icon" variant="ghost"><X/></Button>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-2xl md:text-3xl font-bold truncate">{match.player1Name}</span>
+                        <span className="text-xl md:text-2xl text-muted-foreground">vs</span>
+                        <span className="text-2xl md:text-3xl font-bold truncate">{match.player2Name}</span>
+                        <Button onClick={() => setIsEditingNames(true)} size="icon" variant="ghost" className="ml-2"><Edit/></Button>
+                      </>
+                    )}
+                  </CardTitle>
+                </div>
                 <div className="text-3xl md:text-4xl font-bold text-primary mt-2">{p1Wins} - {p2Wins}</div>
             </div>
             {match.status === 'ended' && (
-                <div className="flex items-center gap-2 text-accent-foreground font-bold p-2 bg-accent rounded-lg absolute -top-2 -right-2 md:top-0 md:right-0 text-xs md:text-base">
+                <div className="flex items-center gap-2 text-accent-foreground font-bold p-2 bg-accent rounded-lg text-xs md:text-base absolute top-0 right-0">
                     <Trophy className="h-4 w-4 md:h-6 md:w-6" />
                     <span>Match Concluded</span>
                 </div>
