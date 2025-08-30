@@ -244,14 +244,15 @@ export default function DashboardPage() {
     }
   }, [user, timePeriod, loadData]);
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
         setUploadedFile(file);
         const reader = new FileReader();
-        reader.onload = (event) => {
+        reader.onload = async (event) => {
             const result = event.target?.result as string;
-            setUploadedImagePreview(result);
+            const resizedImage = await reduceImageSize(result);
+            setUploadedImagePreview(resizedImage);
         };
         reader.readAsDataURL(file);
     }
@@ -270,16 +271,14 @@ export default function DashboardPage() {
     const matchDate = parseDateFromFilename(fileName) || new Date();
 
     const newMatch = await createMatch(user.uid, result.player1Name, result.player2Name, matchDate);
-    
-    const reducedImage = await reduceImageSize(photoDataUri);
-    
+        
     const updatedMatch: Match = { 
       ...newMatch,
       player1TotalFoulPoints: result.player1TotalFoulPoints,
       player2TotalFoulPoints: result.player2TotalFoulPoints,
       frames: newFrames,
       status: 'ended', // Assume uploaded scoreboards are for ended matches
-      scoreboardImage: reducedImage,
+      scoreboardImage: photoDataUri,
     };
     await updateMatch(user.uid, updatedMatch);
     return updatedMatch;
@@ -346,7 +345,8 @@ export default function DashboardPage() {
           const content = await imageFile.async('base64');
           const mimeType = `image/${imageFile.name.split('.').pop()}`;
           const dataUri = `data:${mimeType};base64,${content}`;
-          await processAndCreateMatch(dataUri, imageFile.name);
+          const resizedDataUri = await reduceImageSize(dataUri);
+          await processAndCreateMatch(resizedDataUri, imageFile.name);
           createdCount++;
         } catch (err) {
             console.error(`Failed to process ${imageFile.name}:`, err)
