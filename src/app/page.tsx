@@ -38,6 +38,7 @@ import { auth } from '@/lib/firebase';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import imageCompression from 'browser-image-compression';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 
 interface PlayerWinData {
@@ -56,9 +57,11 @@ interface PlayerScoreByMonthData {
   [key: string]: any; // Player names as keys
 }
 
-interface BestPlayData {
-  name: string;
-  bestPlay: number;
+interface BestPlayTableData {
+  date: string;
+  player: string;
+  frame: string;
+  score: number;
 }
 
 type TimePeriod = 'month' | 'year';
@@ -122,7 +125,7 @@ export default function DashboardPage() {
   const [playerWinData, setPlayerWinData] = useState<PlayerWinData[]>([]);
   const [monthlyMatchData, setMonthlyMatchData] = useState<MonthlyWinData[]>([]);
   const [playerScoreByMonthData, setPlayerScoreByMonthData] = useState<PlayerScoreByMonthData[]>([]);
-  const [bestPlayData, setBestPlayData] = useState<BestPlayData[]>([]);
+  const [bestPlaysTableData, setBestPlaysTableData] = useState<BestPlayTableData[]>([]);
   const [allPlayers, setAllPlayers] = useState<string[]>([]);
   const [isTranslating, setIsTranslating] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -145,7 +148,7 @@ export default function DashboardPage() {
             [player: string]: { totalScore: number, frameCount: number } 
         } 
     } = {};
-    const playerBestPlays: { [key: string]: number } = {};
+    const allBestPlays: BestPlayTableData[] = [];
 
     const players = new Set<string>();
     const timeFormat = period === 'month' ? 'yyyy-MM' : 'yyyy';
@@ -158,13 +161,13 @@ export default function DashboardPage() {
 
     allMatches.forEach(match => {
       const matchDate = parseISO(match.createdAt);
+      
+      if (!isWithinInterval(matchDate, timeInterval)) return;
+
       const periodKey = format(matchDate, timeFormat);
       
       players.add(match.player1Name);
       players.add(match.player2Name);
-
-      if (!playerBestPlays[match.player1Name]) playerBestPlays[match.player1Name] = 0;
-      if (!playerBestPlays[match.player2Name]) playerBestPlays[match.player2Name] = 0;
 
       if (!periodPlayerScores[periodKey]) {
         periodPlayerScores[periodKey] = {};
@@ -196,17 +199,24 @@ export default function DashboardPage() {
           periodPlayerScores[periodKey][match.player2Name].totalScore += frame.player2Score;
           periodPlayerScores[periodKey][match.player2Name].frameCount++;
           
-          if (isWithinInterval(matchDate, timeInterval)) {
-            if (frame.player1Score > playerBestPlays[match.player1Name]) {
-                playerBestPlays[match.player1Name] = frame.player1Score;
-            }
-            if (frame.player2Score > playerBestPlays[match.player2Name]) {
-                playerBestPlays[match.player2Name] = frame.player2Score;
-            }
+          if (frame.player1Score > frame.player2Score) {
+              allBestPlays.push({
+                  date: format(matchDate, 'yyyy-MM-dd'),
+                  player: match.player1Name,
+                  frame: `${frame.player1Score}-${frame.player2Score}`,
+                  score: frame.player1Score,
+              });
+          } else if (frame.player2Score > frame.player1Score) {
+              allBestPlays.push({
+                  date: format(matchDate, 'yyyy-MM-dd'),
+                  player: match.player2Name,
+                  frame: `${frame.player2Score}-${frame.player1Score}`,
+                  score: frame.player2Score,
+              });
           }
       });
       
-      if (isWithinInterval(matchDate, timeInterval) && match.status === 'ended') {
+      if (match.status === 'ended') {
         let p1Wins = 0;
         let p2Wins = 0;
         match.frames.forEach(frame => {
@@ -255,17 +265,12 @@ export default function DashboardPage() {
         })
         .sort((a,b) => new Date(a.month).getTime() - new Date(b.month).getTime());
 
-    const bestPlayChartData = Object.keys(playerBestPlays)
-        .map(name => ({
-            name,
-            bestPlay: playerBestPlays[name],
-        }))
-        .sort((a, b) => b.bestPlay - a.bestPlay);
+    const top10BestPlays = allBestPlays.sort((a,b) => b.score - a.score).slice(0, 10);
     
     setPlayerWinData(winData);
     setMonthlyMatchData(monthlyData);
     setPlayerScoreByMonthData(scoreData);
-    setBestPlayData(bestPlayChartData);
+    setBestPlaysTableData(top10BestPlays);
     setIsLoading(false);
   }, [user]);
 
@@ -613,25 +618,40 @@ export default function DashboardPage() {
             </TabsContent>
             <TabsContent value="best_play">
               <Card>
-                  <CardHeader>
-                  <CardTitle>Best Play</CardTitle>
-                  <CardDescription>Highest single frame score by each player for the selected {timePeriod}.</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                      <BarChart data={bestPlayData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis dataKey="name" stroke="hsl(var(--foreground))" tick={{fontSize: 12}} />
-                      <YAxis stroke="hsl(var(--foreground))" allowDecimals={false} />
-                      <Tooltip
-                          cursor={{ fill: 'transparent' }}
-                          content={<CustomTooltip />}
-                      />
-                      <Legend />
-                      <Bar dataKey="bestPlay" fill="hsl(var(--chart-2))" name="Best Play" />
-                      </BarChart>
-                  </ResponsiveContainer>
-                  </CardContent>
+                <CardHeader>
+                  <CardTitle>Top 10 Best Plays</CardTitle>
+                  <CardDescription>
+                    Highest single frame scores for the selected {timePeriod}.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Player</TableHead>
+                        <TableHead className="text-right">Frame</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {bestPlaysTableData.length > 0 ? (
+                        bestPlaysTableData.map((play, index) => (
+                          <TableRow key={index}>
+                            <TableCell>{play.date}</TableCell>
+                            <TableCell className="font-medium">{play.player}</TableCell>
+                            <TableCell className="text-right font-code">{play.frame}</TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={3} className="h-24 text-center">
+                            No best plays recorded for this period.
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </CardContent>
               </Card>
             </TabsContent>
           </Tabs>
