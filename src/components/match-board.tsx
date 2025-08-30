@@ -195,7 +195,7 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
   const formatDate = (dateString: string) => {
     if (!dateString) return 'N/A';
     try {
-        return format(parseISO(dateString), 'PPp');
+        return format(parseISO(dateString), 'PPP');
     } catch (error) {
         return 'Invalid Date';
     }
@@ -237,11 +237,11 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
              <div className="text-xs text-muted-foreground mt-4 flex items-center justify-center gap-4">
                 <div className="flex items-center gap-1.5">
                     <Calendar className="h-4 w-4" />
-                    <span>Created: {formatDate(match.createdAt)}</span>
+                    <span>Match Date: {formatDate(match.createdAt)}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                     <Clock className="h-4 w-4" />
-                    <span>Updated: {formatDate(match.modifiedAt)}</span>
+                    <span>Last Updated: {formatDate(match.modifiedAt)}</span>
                 </div>
             </div>
         </div>
