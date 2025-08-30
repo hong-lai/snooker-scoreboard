@@ -13,6 +13,7 @@ export interface Match {
   player2TotalFoulPoints: number;
   status: 'playing' | 'ended';
   createdAt: string;
+  modifiedAt: string;
   scoreboardImage?: string;
   userId?: string; // Optional because it's not stored in the doc itself, but useful on the client
 }

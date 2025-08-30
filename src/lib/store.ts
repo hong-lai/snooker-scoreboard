@@ -32,6 +32,7 @@ export const getMatchById = async (userId: string, id: string): Promise<Match | 
 
 export const createMatch = async (userId: string, player1Name: string, player2Name: string, createdAt?: Date): Promise<Match> => {
     const matchesCol = getMatchesCollection(userId);
+    const now = (createdAt || new Date()).toISOString();
     const newMatchData = {
         player1Name,
         player2Name,
@@ -39,7 +40,8 @@ export const createMatch = async (userId: string, player1Name: string, player2Na
         player1TotalFoulPoints: 0,
         player2TotalFoulPoints: 0,
         status: 'playing' as const,
-        createdAt: (createdAt || new Date()).toISOString(),
+        createdAt: now,
+        modifiedAt: now,
     };
 
     const docRef = await addDoc(matchesCol, newMatchData);
@@ -54,8 +56,14 @@ export const updateMatch = async (userId: string, updatedMatch: Match): Promise<
     const matchDocRef = doc(db, 'users', userId, MATCHES_COLLECTION, updatedMatch.id);
     // The `userId` property should not be part of the match document itself.
     const { id, userId: matchUserId, ...matchData } = updatedMatch;
-    await updateDoc(matchDocRef, matchData);
-    return updatedMatch;
+    
+    const dataToUpdate = {
+        ...matchData,
+        modifiedAt: new Date().toISOString(),
+    };
+
+    await updateDoc(matchDocRef, dataToUpdate);
+    return { ...updatedMatch, modifiedAt: dataToUpdate.modifiedAt };
 };
 
 

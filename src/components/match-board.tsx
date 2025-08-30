@@ -11,10 +11,11 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 import { verifySnookerScoreEntry } from '@/ai/flows/verify-snooker-score-entry';
-import { Loader2, Save, Trophy, Star, ShieldAlert, TrendingUp, Circle, FileImage, Edit, Check, X, MoreVertical, Ban } from 'lucide-react';
+import { Loader2, Save, Trophy, Star, ShieldAlert, TrendingUp, Circle, FileImage, Edit, Check, X, MoreVertical, Ban, Calendar, Clock } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Label } from './ui/label';
+import { format, parseISO } from 'date-fns';
 
 interface MatchBoardProps {
   initialMatch: Match;
@@ -191,6 +192,15 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
 
   const isViewMode = match.status === 'ended' && !isEditing;
 
+  const formatDate = (dateString: string) => {
+    if (!dateString) return 'N/A';
+    try {
+        return format(parseISO(dateString), 'PPp');
+    } catch (error) {
+        return 'Invalid Date';
+    }
+  };
+
   return (
     <Card>
       <CardHeader className="text-center relative">
@@ -224,6 +234,16 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
               </div>
             )}
             <div className="text-3xl md:text-4xl font-bold text-primary mt-2">{p1Wins} - {p2Wins}</div>
+             <div className="text-xs text-muted-foreground mt-4 flex items-center justify-center gap-4">
+                <div className="flex items-center gap-1.5">
+                    <Calendar className="h-4 w-4" />
+                    <span>Created: {formatDate(match.createdAt)}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                    <Clock className="h-4 w-4" />
+                    <span>Updated: {formatDate(match.modifiedAt)}</span>
+                </div>
+            </div>
         </div>
         <div className="grid grid-cols-2 gap-4 text-xs md:text-sm text-muted-foreground mt-6 border-t pt-4">
             <div className="text-center space-y-1">
