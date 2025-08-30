@@ -679,7 +679,7 @@ export default function DashboardPage() {
 
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
           <h2 className="text-2xl md:text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-destructive bg-clip-text text-transparent">Match History</h2>
-          <div className="flex gap-2 w-full sm:w-auto">
+          <div className="flex gap-2 w-full sm:w-auto flex-wrap">
             <Dialog>
                 <DialogTrigger asChild>
                     <Button variant="outline" className="flex-1"><Camera className="mr-2 h-4 w-4" /> Upload Score</Button>
