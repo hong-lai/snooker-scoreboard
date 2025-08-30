@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
@@ -17,7 +18,7 @@ import { Input } from '@/components/ui/input';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 import { translateSnookerScoreFromImage } from '@/ai/flows/translate-snooker-score-from-image';
-import { format, parseISO, isWithinInterval, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import JSZip from 'jszip';
 import {
   Bar,
@@ -158,17 +159,10 @@ export default function DashboardPage() {
     const players = new Set<string>();
     const timeFormat = period === 'month' ? 'yyyy-MM' : 'yyyy';
     const displayFormat = period === 'month' ? 'MMM yyyy' : 'yyyy';
-    
-    const now = new Date();
-    const timeInterval = period === 'month' 
-        ? { start: startOfMonth(now), end: endOfMonth(now) }
-        : { start: startOfYear(now), end: endOfYear(now) };
 
     allMatches.forEach(match => {
       const matchDate = parseISO(match.createdAt);
       
-      if (!isWithinInterval(matchDate, timeInterval)) return;
-
       const periodKey = format(matchDate, timeFormat);
       
       players.add(match.player1Name);
@@ -632,7 +626,7 @@ export default function DashboardPage() {
                 <CardHeader>
                   <CardTitle>Top 10 Best Plays</CardTitle>
                   <CardDescription>
-                    Highest single frame scores for the selected {timePeriod}.
+                    Highest single frame scores across all matches.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
