@@ -7,6 +7,7 @@ import { Header } from '@/components/header';
 import { MatchCard } from '@/components/match-card';
 import type { Match, Frame } from '@/lib/types';
 import { getMatches, createMatch, updateMatch, deleteMatch } from '@/lib/store';
+import { ensureSignedIn } from '@/lib/firebase';
 import { Plus, Camera, Loader2, Star, Circle, LogOut, Upload } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
@@ -110,7 +111,8 @@ export default function DashboardPage() {
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
-    const allMatches = getMatches();
+    await ensureSignedIn(); // Ensure we have a firebase session
+    const allMatches = await getMatches();
     setMatches(allMatches);
 
     const playerStats: { [key: string]: { wins: number } } = {};
@@ -228,7 +230,7 @@ export default function DashboardPage() {
     
     const matchDate = parseDateFromFilename(fileName) || new Date();
 
-    const newMatch = createMatch(result.player1Name, result.player2Name, matchDate);
+    const newMatch = await createMatch(result.player1Name, result.player2Name, matchDate);
     
     const reducedImage = await reduceImageSize(photoDataUri);
     
@@ -240,7 +242,7 @@ export default function DashboardPage() {
       status: 'ended', // Assume uploaded scoreboards are for ended matches
       scoreboardImage: reducedImage,
     };
-    updateMatch(updatedMatch);
+    await updateMatch(updatedMatch);
     return updatedMatch;
   };
 
@@ -331,9 +333,9 @@ export default function DashboardPage() {
     }
   };
 
-  const handleDeleteMatch = (id: string) => {
+  const handleDeleteMatch = async (id: string) => {
     try {
-        deleteMatch(id);
+        await deleteMatch(id);
         loadData();
         toast({
             title: "Match Deleted",

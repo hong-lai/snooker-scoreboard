@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { Match } from '@/lib/types';
 import { Users, Calendar, ChevronRight, Trophy, Trash2 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -55,7 +55,7 @@ export function MatchCard({ match, onDelete }: MatchCardProps) {
         </div>
         <CardDescription className="flex items-center pt-1">
           <Calendar className="mr-2 h-4 w-4" />
-          {format(new Date(match.createdAt), 'PPP')}
+          {format(parseISO(match.createdAt), 'PPP')}
         </CardDescription>
       </CardHeader>
       <CardContent>

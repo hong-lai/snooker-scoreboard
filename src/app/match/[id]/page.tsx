@@ -16,9 +16,9 @@ export default function MatchPage() {
   const [match, setMatch] = useState<Match | null | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
 
-  const updateMatchData = useCallback(() => {
+  const updateMatchData = useCallback(async () => {
     if (params.id) {
-      const matchData = getMatchById(params.id as string);
+      const matchData = await getMatchById(params.id as string);
       setMatch(matchData);
       setIsLoading(false);
     }
