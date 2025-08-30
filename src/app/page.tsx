@@ -43,7 +43,7 @@ interface PlayerWinData {
 
 interface MonthlyWinData {
     month: string;
-    wins: number;
+    avgFrames: number;
 }
 
 interface PlayerScoreByMonthData {
@@ -103,7 +103,7 @@ export default function DashboardPage() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [playerWinData, setPlayerWinData] = useState<PlayerWinData[]>([]);
-  const [monthlyWinData, setMonthlyWinData] = useState<MonthlyWinData[]>([]);
+  const [monthlyMatchData, setMonthlyMatchData] = useState<MonthlyWinData[]>([]);
   const [playerScoreByMonthData, setPlayerScoreByMonthData] = useState<PlayerScoreByMonthData[]>([]);
   const [allPlayers, setAllPlayers] = useState<string[]>([]);
   const [isTranslating, setIsTranslating] = useState(false);
@@ -121,8 +121,13 @@ export default function DashboardPage() {
     setMatches(allMatches);
 
     const playerStats: { [key: string]: { wins: number } } = {};
-    const monthlyStats: { [key: string]: number } = {};
-    const monthlyPlayerScores: { [month: string]: { [player: string]: number } } = {};
+    const monthlyStats: { [month: string]: { totalFrames: number, matchCount: number } } = {};
+    const monthlyPlayerScores: { 
+        [month: string]: { 
+            [player: string]: { totalScore: number, frameCount: number } 
+        } 
+    } = {};
+
     const players = new Set<string>();
 
     allMatches.forEach(match => {
@@ -138,19 +143,28 @@ export default function DashboardPage() {
       
       if (match.status === 'ended') {
           if (!monthlyStats[monthKey]) {
-              monthlyStats[monthKey] = 0;
+              monthlyStats[monthKey] = { totalFrames: 0, matchCount: 0 };
           }
-          monthlyStats[monthKey]++;
+          monthlyStats[monthKey].matchCount++;
+          monthlyStats[monthKey].totalFrames += match.frames.length;
       }
 
       if (!playerStats[match.player1Name]) playerStats[match.player1Name] = { wins: 0 };
       if (!playerStats[match.player2Name]) playerStats[match.player2Name] = { wins: 0 };
       
       match.frames.forEach(frame => {
-          if (!monthlyPlayerScores[monthKey][match.player1Name]) monthlyPlayerScores[monthKey][match.player1Name] = 0;
-          if (!monthlyPlayerScores[monthKey][match.player2Name]) monthlyPlayerScores[monthKey][match.player2Name] = 0;
-          monthlyPlayerScores[monthKey][match.player1Name] += frame.player1Score;
-          monthlyPlayerScores[monthKey][match.player2Name] += frame.player2Score;
+          if (!monthlyPlayerScores[monthKey][match.player1Name]) {
+            monthlyPlayerScores[monthKey][match.player1Name] = { totalScore: 0, frameCount: 0 };
+          }
+          if (!monthlyPlayerScores[monthKey][match.player2Name]) {
+            monthlyPlayerScores[monthKey][match.player2Name] = { totalScore: 0, frameCount: 0 };
+          }
+
+          monthlyPlayerScores[monthKey][match.player1Name].totalScore += frame.player1Score;
+          monthlyPlayerScores[monthKey][match.player1Name].frameCount++;
+
+          monthlyPlayerScores[monthKey][match.player2Name].totalScore += frame.player2Score;
+          monthlyPlayerScores[monthKey][match.player2Name].frameCount++;
       });
 
       if (match.status === 'ended') {
@@ -182,22 +196,27 @@ export default function DashboardPage() {
     const monthlyData = Object.keys(monthlyStats)
       .map(month => ({
         month: format(parseISO(month), 'MMM yyyy'),
-        wins: monthlyStats[month],
+        avgFrames: monthlyStats[month].matchCount > 0 ? parseFloat((monthlyStats[month].totalFrames / monthlyStats[month].matchCount).toFixed(1)) : 0,
       }))
-      .sort((a,b) => parseISO(a.month).getTime() - parseISO(b.month).getTime());
+      .sort((a,b) => new Date(a.month).getTime() - new Date(b.month).getTime());
     
     const scoreData = Object.keys(monthlyPlayerScores)
-      .map(month => {
-          const record: PlayerScoreByMonthData = { month: format(parseISO(month), 'MMM yyyy') };
-          uniquePlayers.forEach(p => {
-            record[p] = monthlyPlayerScores[month][p] || 0;
-          });
-          return record;
-      })
-      .sort((a,b) => parseISO(a.month).getTime() - parseISO(b.month).getTime());
+        .map(month => {
+            const record: PlayerScoreByMonthData = { month: format(parseISO(month), 'MMM yyyy') };
+            uniquePlayers.forEach(player => {
+                const playerData = monthlyPlayerScores[month][player];
+                if (playerData && playerData.frameCount > 0) {
+                    record[player] = parseFloat((playerData.totalScore / playerData.frameCount).toFixed(1));
+                } else {
+                    record[player] = 0;
+                }
+            });
+            return record;
+        })
+        .sort((a,b) => new Date(a.month).getTime() - new Date(b.month).getTime());
 
     setPlayerWinData(winData);
-    setMonthlyWinData(monthlyData);
+    setMonthlyMatchData(monthlyData);
     setPlayerScoreByMonthData(scoreData);
     setIsLoading(false);
   }, [user]);
@@ -449,11 +468,11 @@ export default function DashboardPage() {
               <Card>
                   <CardHeader>
                       <CardTitle>Match Timeline</CardTitle>
-                      <CardDescription>Number of matches completed per month.</CardDescription>
+                      <CardDescription>Average frames played per match each month.</CardDescription>
                   </CardHeader>
                   <CardContent>
                       <ResponsiveContainer width="100%" height={300}>
-                          <LineChart data={monthlyWinData}>
+                          <LineChart data={monthlyMatchData}>
                               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                               <XAxis dataKey="month" stroke="hsl(var(--foreground))" tick={{fontSize: 12}} />
                               <YAxis stroke="hsl(var(--foreground))" allowDecimals={false} />
@@ -462,7 +481,7 @@ export default function DashboardPage() {
                                   content={<CustomTooltip />}
                               />
                               <Legend />
-                              <Line type="monotone" dataKey="wins" stroke="hsl(var(--primary))" name="Matches Completed" />
+                              <Line type="monotone" dataKey="avgFrames" stroke="hsl(var(--primary))" name="Avg. Frames / Match" />
                           </LineChart>
                       </ResponsiveContainer>
                   </CardContent>
@@ -472,7 +491,7 @@ export default function DashboardPage() {
               <Card>
                   <CardHeader>
                       <CardTitle>Player Score Timeline</CardTitle>
-                      <CardDescription>Total points scored by each player per month.</CardDescription>
+                      <CardDescription>Average points scored per frame by each player per month.</CardDescription>
                   </CardHeader>
                   <CardContent>
                       <ResponsiveContainer width="100%" height={300}>
