@@ -35,7 +35,6 @@ import { TooltipProps } from 'recharts';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
@@ -475,7 +474,6 @@ export default function DashboardPage() {
                 <Carousel
                   opts={{
                     align: "start",
-                    dragFree: true,
                   }}
                   className="w-full"
                 >
@@ -584,7 +582,7 @@ export default function DashboardPage() {
                   <CardContent>
                       <ResponsiveContainer width="100%" height={300}>
                           <LineChart data={playerScoreByMonthData}>
-                              <CartesianGrid strokeDasharray="3_3" stroke="hsl(var(--border))" />
+                              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                               <XAxis dataKey="month" stroke="hsl(var(--foreground))" tick={{fontSize: 12}} />
                               <YAxis stroke="hsl(var(--foreground))" />
                               <Tooltip
