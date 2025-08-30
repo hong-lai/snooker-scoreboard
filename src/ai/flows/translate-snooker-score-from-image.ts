@@ -68,9 +68,11 @@ const prompt = ai.definePrompt({
   output: {schema: TranslateSnookerScoreFromImageOutputSchema},
   prompt: `You are an AI expert at extracting snooker scores from images of handwritten scoreboards. Your task is to extract the data with perfect accuracy.
 
-  **CRITICAL RULE:** The physical, top-to-bottom order of the rows in the image is completely irrelevant. You **MUST** use the number inside the circle (e.g., ①, ⑩) on each line as the one and only identifier for the 'frameNumber'. If you process the rows from top to bottom, you will fail. You must identify the circled number for each row and use that for the frame number.
+  **VERY IMPORTANT FIRST STEP:** Before you do anything else, you **MUST** determine the correct orientation of the image. Photos from phones are often sideways. Look at the text. If it is not upright, you must mentally rotate the image until it is correctly oriented before you proceed with the extraction. Failure to orient the image correctly will result in failure to extract the data.
 
-  **Step-by-step extraction process:**
+  **CRITICAL RULE:** The physical, top-to-bottom order of the rows in the correctly-oriented image is completely irrelevant. You **MUST** use the number inside the circle (e.g., ①, ⑩) on each line as the one and only identifier for the 'frameNumber'. If you process the rows from top to bottom, you will fail. You must identify the circled number for each row and use that for the frame number.
+
+  **Step-by-step extraction process (after correcting orientation):**
   1.  **Identify All Frame Rows:** Look at every row that contains a score.
   2.  **For EACH row, find the circled number first.** This is the 'frameNumber'. For example, a row with ⑩ means 'frameNumber: 10'. A row with ① means 'frameNumber: 1'.
   3.  **Extract Player Scores:** For that same row, find the score. It will be in a '<score1>-<score2>' format. The first score belongs to Player 1 (the name on the left), and the second score belongs to Player 2 (the name on the right). Be very careful reading the handwritten digits.
