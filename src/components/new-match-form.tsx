@@ -55,7 +55,7 @@ export function NewMatchForm() {
             <FormItem>
               <FormLabel>Player 1 Name</FormLabel>
               <FormControl>
-                <Input placeholder="e.g. John Doe" {...field} />
+                <Input placeholder="e.g. John Doe" {...field} autoComplete="off" />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -68,7 +68,7 @@ export function NewMatchForm() {
             <FormItem>
               <FormLabel>Player 2 Name</FormLabel>
               <FormControl>
-                <Input placeholder="e.g. Jane Smith" {...field} />
+                <Input placeholder="e.g. Jane Smith" {...field} autoComplete="off" />
               </FormControl>
               <FormMessage />
             </FormItem>

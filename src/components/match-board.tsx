@@ -195,11 +195,11 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
                  {isEditing ? (
                     <>
                     <TableCell className="text-right p-1">
-                      <Input value={frame.player1Score} onChange={(e) => handleFrameInputChange(index, 'player1Score', e.target.value)} className="w-20 h-8 text-right mx-auto"/>
+                      <Input value={frame.player1Score} onChange={(e) => handleFrameInputChange(index, 'player1Score', e.target.value)} className="w-20 h-8 text-right mx-auto" autoComplete="off"/>
                     </TableCell>
                     <TableCell className="text-center w-[20px] p-1">-</TableCell>
                     <TableCell className="text-left p-1">
-                       <Input value={frame.player2Score} onChange={(e) => handleFrameInputChange(index, 'player2Score', e.target.value)} className="w-20 h-8"/>
+                       <Input value={frame.player2Score} onChange={(e) => handleFrameInputChange(index, 'player2Score', e.target.value)} className="w-20 h-8" autoComplete="off"/>
                     </TableCell>
                     </>
                  ) : (
@@ -224,9 +224,9 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
                     <TableCell className="font-medium text-center">{editedFrames.length + 1}</TableCell>
                     <TableCell className="text-right" colSpan={3}>
                         <div className="flex items-center justify-center gap-1">
-                        <Input name="p1Score" value={newFrame.p1Score} onChange={handleInputChange} className="w-24 h-8 text-right" placeholder="P1 Score"/>
+                        <Input name="p1Score" value={newFrame.p1Score} onChange={handleInputChange} className="w-24 h-8 text-right" placeholder="P1 Score" autoComplete="off"/>
                         <span className="mx-2">vs</span>
-                        <Input name="p2Score" value={newFrame.p2Score} onChange={handleInputChange} className="w-24 h-8" placeholder="P2 Score"/>
+                        <Input name="p2Score" value={newFrame.p2Score} onChange={handleInputChange} className="w-24 h-8" placeholder="P2 Score" autoComplete="off"/>
                         </div>
                     </TableCell>
                     <TableCell />
