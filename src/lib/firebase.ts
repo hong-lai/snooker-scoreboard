@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
+import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
@@ -16,18 +16,4 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Sign in anonymously
-const ensureSignedIn = async () => {
-    return new Promise((resolve) => {
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                resolve(user);
-            } else {
-                signInAnonymously(auth).then(userCredential => resolve(userCredential.user));
-            }
-        });
-    });
-};
-
-
-export { db, auth, ensureSignedIn };
+export { db, auth };

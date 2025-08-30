@@ -9,43 +9,55 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Trophy } from 'lucide-react';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (password !== confirmPassword) {
+      toast({
+        variant: 'destructive',
+        title: 'Registration Failed',
+        description: 'Passwords do not match.',
+      });
+      return;
+    }
     setIsLoading(true);
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      await createUserWithEmailAndPassword(auth, email, password);
       toast({
-        title: 'Login Successful',
-        description: 'Welcome back!',
+        title: 'Registration Successful',
+        description: 'You can now log in with your new account.',
       });
-      router.replace('/');
+      router.replace('/login');
     } catch (error: any) {
       console.error(error);
       const errorCode = error.code;
       let errorMessage = 'An unknown error occurred.';
 
-      if (errorCode === 'auth/invalid-credential' || errorCode === 'auth/user-not-found' || errorCode === 'auth/wrong-password') {
-        errorMessage = 'Invalid email or password. Please try again.';
+      if (errorCode === 'auth/email-already-in-use') {
+        errorMessage = 'This email address is already in use.';
       } else if (errorCode === 'auth/invalid-email') {
         errorMessage = 'Please enter a valid email address.';
+      } else if (errorCode === 'auth/weak-password') {
+        errorMessage = 'The password is too weak. Please use at least 6 characters.';
       }
-      
+
       toast({
         variant: 'destructive',
-        title: 'Authentication Failed',
+        title: 'Registration Failed',
         description: errorMessage,
       });
+    } finally {
       setIsLoading(false);
     }
   };
@@ -60,13 +72,13 @@ export default function LoginPage() {
       </div>
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle className="text-2xl">Login</CardTitle>
+          <CardTitle className="text-2xl">Create an Account</CardTitle>
           <CardDescription>
-            Enter your credentials to access the dashboard.
+            Enter your details to get started.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleRegister} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -89,17 +101,28 @@ export default function LoginPage() {
                 required
               />
             </div>
+             <div className="space-y-2">
+              <Label htmlFor="confirm-password">Confirm Password</Label>
+              <Input
+                id="confirm-password"
+                type="password"
+                placeholder="••••••••"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
+            </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isLoading ? 'Signing In...' : 'Login'}
+              {isLoading ? 'Creating Account...' : 'Sign Up'}
             </Button>
           </form>
         </CardContent>
-         <CardFooter className="flex-col items-start text-sm">
-            <p className="text-muted-foreground">Don&apos;t have an account?</p>
+        <CardFooter className="flex-col items-start text-sm">
+            <p className="text-muted-foreground">Already have an account?</p>
             <Button variant="link" className="p-0 h-auto" asChild>
-                <Link href="/register">
-                    Sign up now
+                <Link href="/login">
+                    Log in here
                 </Link>
             </Button>
         </CardFooter>

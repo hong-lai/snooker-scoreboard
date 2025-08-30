@@ -7,7 +7,7 @@ import { Header } from '@/components/header';
 import { MatchCard } from '@/components/match-card';
 import type { Match, Frame } from '@/lib/types';
 import { getMatches, createMatch, updateMatch, deleteMatch } from '@/lib/store';
-import { ensureSignedIn } from '@/lib/firebase';
+import { useAuth } from '@/hooks/use-auth';
 import { Plus, Camera, Loader2, Star, Circle, LogOut, Upload } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
@@ -31,6 +31,8 @@ import {
 } from 'recharts';
 import { TooltipProps } from 'recharts';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { signOut } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 interface PlayerWinData {
   name: string;
@@ -95,6 +97,7 @@ const playerColors = [
 
 
 export default function DashboardPage() {
+  const { user, loading } = useAuth();
   const [matches, setMatches] = useState<Match[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [playerWinData, setPlayerWinData] = useState<PlayerWinData[]>([]);
@@ -110,9 +113,9 @@ export default function DashboardPage() {
   const router = useRouter();
 
   const loadData = useCallback(async () => {
+    if (!user) return;
     setIsLoading(true);
-    await ensureSignedIn(); // Ensure we have a firebase session
-    const allMatches = await getMatches();
+    const allMatches = await getMatches(user.uid);
     setMatches(allMatches);
 
     const playerStats: { [key: string]: { wins: number } } = {};
@@ -195,17 +198,19 @@ export default function DashboardPage() {
     setMonthlyWinData(monthlyData);
     setPlayerScoreByMonthData(scoreData);
     setIsLoading(false);
-  }, []);
+  }, [user]);
 
   useEffect(() => {
-    const isLoggedIn = sessionStorage.getItem('isLoggedIn');
-    if (!isLoggedIn) {
+    if (!loading && !user) {
       router.replace('/login');
-    } else {
+    }
+  }, [user, loading, router]);
+  
+  useEffect(() => {
+    if (user) {
       loadData();
     }
-  }, [router, loadData]);
-
+  }, [user, loadData]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -221,6 +226,8 @@ export default function DashboardPage() {
   };
 
   const processAndCreateMatch = async (photoDataUri: string, fileName: string) => {
+    if (!user) throw new Error("User not authenticated.");
+
     const result = await translateSnookerScoreFromImage({ photoDataUri });
     const newFrames: Frame[] = result.frames.map(f => ({
         player1Score: f.player1Score,
@@ -230,7 +237,7 @@ export default function DashboardPage() {
     
     const matchDate = parseDateFromFilename(fileName) || new Date();
 
-    const newMatch = await createMatch(result.player1Name, result.player2Name, matchDate);
+    const newMatch = await createMatch(user.uid, result.player1Name, result.player2Name, matchDate);
     
     const reducedImage = await reduceImageSize(photoDataUri);
     
@@ -242,12 +249,12 @@ export default function DashboardPage() {
       status: 'ended', // Assume uploaded scoreboards are for ended matches
       scoreboardImage: reducedImage,
     };
-    await updateMatch(updatedMatch);
+    await updateMatch(user.uid, updatedMatch);
     return updatedMatch;
   };
 
   const handleTranslateImage = async () => {
-    if (!uploadedFile || !uploadedImagePreview) return;
+    if (!uploadedFile || !uploadedImagePreview || !user) return;
     setIsTranslating(true);
 
     try {
@@ -278,6 +285,7 @@ export default function DashboardPage() {
   };
 
   const handleBatchUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!user) return;
     const file = e.target.files?.[0];
     if (!file || !file.name.endsWith('.zip')) {
       toast({
@@ -334,8 +342,9 @@ export default function DashboardPage() {
   };
 
   const handleDeleteMatch = async (id: string) => {
+    if (!user) return;
     try {
-        await deleteMatch(id);
+        await deleteMatch(user.uid, id);
         loadData();
         toast({
             title: "Match Deleted",
@@ -350,12 +359,20 @@ export default function DashboardPage() {
     }
   };
 
-  const handleLogout = () => {
-    sessionStorage.removeItem('isLoggedIn');
-    router.replace('/login');
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      router.replace('/login');
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Logout Failed',
+        description: 'There was an issue signing out. Please try again.',
+      });
+    }
   };
 
-  if (isLoading) {
+  if (loading || !user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -385,10 +402,13 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-background">
       <Header>
-        <Button onClick={handleLogout} variant="ghost" size="sm">
-          <LogOut className="mr-2 h-4 w-4" />
-          Logout
-        </Button>
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-muted-foreground hidden sm:inline">{user.email}</span>
+          <Button onClick={handleLogout} variant="ghost" size="sm">
+            <LogOut className="mr-2 h-4 w-4" />
+            Logout
+          </Button>
+        </div>
       </Header>
       <main className="p-4 md:p-8 page-transition">
         {hasData && (
@@ -509,7 +529,12 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {matches.length > 0 ? (
+        {isLoading ? (
+          <div className="text-center py-16">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+            <p className="text-muted-foreground mt-4">Loading matches...</p>
+          </div>
+        ) : hasData ? (
           <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
             {matches.map((match) => (
               <MatchCard key={match.id} match={match} onDelete={() => handleDeleteMatch(match.id)} />

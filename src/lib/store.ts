@@ -1,66 +1,66 @@
 'use client';
-import { db, ensureSignedIn } from './firebase';
-import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
-import type { Match, Frame } from './types';
+import { db } from './firebase';
+import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, where, orderBy } from 'firebase/firestore';
+import type { Match } from './types';
 
 const MATCHES_COLLECTION = 'matches';
 
-// Ensure we are signed in before any operation
-const getDb = async () => {
-    await ensureSignedIn();
-    return db;
+// This function gets the user-specific collection reference
+const getMatchesCollection = (userId: string) => {
+    return collection(db, 'users', userId, MATCHES_COLLECTION);
 }
 
-export const getMatches = async (): Promise<Match[]> => {
-    const db = await getDb();
-    const matchesCol = collection(db, MATCHES_COLLECTION);
+export const getMatches = async (userId: string): Promise<Match[]> => {
+    const matchesCol = getMatchesCollection(userId);
     const q = query(matchesCol, orderBy('createdAt', 'desc'));
     const matchSnapshot = await getDocs(q);
     const matchList = matchSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Match));
     return matchList;
 };
 
-export const getMatchById = async (id: string): Promise<Match | null> => {
-  const db = await getDb();
-  const matchDocRef = doc(db, MATCHES_COLLECTION, id);
-  const matchDoc = await getDoc(matchDocRef);
-  if (matchDoc.exists()) {
-    return { id: matchDoc.id, ...matchDoc.data() } as Match;
-  }
-  return null;
+export const getMatchById = async (userId: string, id: string): Promise<Match | null> => {
+    const matchDocRef = doc(db, 'users', userId, MATCHES_COLLECTION, id);
+    const matchDoc = await getDoc(matchDocRef);
+
+    if (matchDoc.exists()) {
+        const data = matchDoc.data();
+        if (data.userId === userId) {
+            return { id: matchDoc.id, ...data } as Match;
+        }
+    }
+    return null;
 };
 
-export const createMatch = async (player1Name: string, player2Name: string, createdAt?: Date): Promise<Match> => {
-  const db = await getDb();
-  const newMatchData = {
-    player1Name,
-    player2Name,
-    frames: [],
-    player1TotalFoulPoints: 0,
-    player2TotalFoulPoints: 0,
-    status: 'playing' as const,
-    createdAt: (createdAt || new Date()).toISOString(),
-  };
+export const createMatch = async (userId: string, player1Name: string, player2Name: string, createdAt?: Date): Promise<Match> => {
+    const matchesCol = getMatchesCollection(userId);
+    const newMatchData = {
+        userId,
+        player1Name,
+        player2Name,
+        frames: [],
+        player1TotalFoulPoints: 0,
+        player2TotalFoulPoints: 0,
+        status: 'playing' as const,
+        createdAt: (createdAt || new Date()).toISOString(),
+    };
 
-  const docRef = await addDoc(collection(db, MATCHES_COLLECTION), newMatchData);
+    const docRef = await addDoc(matchesCol, newMatchData);
   
-  return {
-    id: docRef.id,
-    ...newMatchData,
-  };
+    return {
+        id: docRef.id,
+        ...newMatchData,
+    };
 };
 
-export const updateMatch = async (updatedMatch: Match): Promise<Match> => {
-    const db = await getDb();
-    const matchDocRef = doc(db, MATCHES_COLLECTION, updatedMatch.id);
+export const updateMatch = async (userId: string, updatedMatch: Match): Promise<Match> => {
+    const matchDocRef = doc(db, 'users', userId, MATCHES_COLLECTION, updatedMatch.id);
     const { id, ...matchData } = updatedMatch;
     await updateDoc(matchDocRef, matchData);
     return updatedMatch;
 };
 
 
-export const deleteMatch = async (id: string): Promise<void> => {
-    const db = await getDb();
-    const matchDocRef = doc(db, MATCHES_COLLECTION, id);
+export const deleteMatch = async (userId: string, id: string): Promise<void> => {
+    const matchDocRef = doc(db, 'users', userId, MATCHES_COLLECTION, id);
     await deleteDoc(matchDocRef);
 };

@@ -11,6 +11,7 @@ import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 import { verifySnookerScoreEntry } from '@/ai/flows/verify-snooker-score-entry';
 import { Loader2, Save, Trophy, Star, ShieldAlert, TrendingUp, Circle, FileImage } from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
 
 interface MatchBoardProps {
   initialMatch: Match;
@@ -31,6 +32,7 @@ const TagIcon = ({ tag }: { tag?: string }) => {
 
 
 export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
+  const { user } = useAuth();
   const [match, setMatch] = useState(initialMatch);
   const [newFrame, setNewFrame] = useState({ p1Score: '', p2Score: '' });
   const [isSaving, setIsSaving] = useState(false);
@@ -45,6 +47,7 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
   };
 
   const handleSaveFrame = async () => {
+    if (!user) return;
     setIsSaving(true);
     const p1s = parseInt(newFrame.p1Score) || 0;
     const p2s = parseInt(newFrame.p2Score) || 0;
@@ -72,7 +75,7 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
     const updatedMatch = { ...match, frames: [...match.frames, frame] };
     
     try {
-        await updateMatch(updatedMatch);
+        await updateMatch(user.uid, updatedMatch);
         setMatch(updatedMatch);
         setNewFrame({ p1Score: '', p2Score: '' });
         onUpdate();
@@ -85,10 +88,11 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
   };
 
   const handleEndMatch = async () => {
+    if (!user) return;
     setIsEndingMatch(true);
     const updatedMatch = { ...match, status: 'ended' as const };
     try {
-        await updateMatch(updatedMatch);
+        await updateMatch(user.uid, updatedMatch);
         setMatch(updatedMatch);
         onUpdate();
     } catch(e) {

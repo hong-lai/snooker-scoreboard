@@ -6,24 +6,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowLeft, Loader2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 
 export default function NewMatchPage() {
-  const [isMounted, setIsMounted] = useState(false);
+  const { user, loading } = useAuth();
   const router = useRouter();
-
+  
   useEffect(() => {
-    const isLoggedIn = sessionStorage.getItem('isLoggedIn');
-    if (!isLoggedIn) {
+    if (!loading && !user) {
         router.replace('/login');
-    } else {
-        setIsMounted(true);
     }
-  }, [router]);
+  }, [user, loading, router]);
 
-  if (!isMounted) {
+  if (loading || !user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
