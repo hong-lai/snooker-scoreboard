@@ -14,7 +14,12 @@ export const getMatches = async (userId: string): Promise<Match[]> => {
     const matchesCol = getMatchesCollection(userId);
     const q = query(matchesCol, orderBy('createdAt', 'desc'));
     const matchSnapshot = await getDocs(q);
-    const matchList = matchSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Match));
+    const matchList = matchSnapshot.docs.map(doc => {
+        const data = doc.data();
+        // Exclude the large image data from the list view
+        delete data.scoreboardImage; 
+        return { id: doc.id, ...data } as Match;
+    });
     return matchList;
 };
 
