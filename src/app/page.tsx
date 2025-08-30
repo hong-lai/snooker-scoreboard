@@ -70,31 +70,6 @@ const parseDateFromFilename = (filename: string): Date | null => {
     return null;
 };
 
-const reduceImageSize = (base64Str: string, maxWidth = 800, quality = 0.7): Promise<string> => {
-  return new Promise((resolve) => {
-    const img = document.createElement('img');
-    img.src = base64Str;
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      const ratio = img.width / img.height;
-      let width = img.width;
-      let height = img.height;
-
-      if (width > maxWidth) {
-        width = maxWidth;
-        height = maxWidth / ratio;
-      }
-      
-      canvas.width = width;
-      canvas.height = height;
-
-      const ctx = canvas.getContext('2d');
-      ctx?.drawImage(img, 0, 0, width, height);
-      resolve(canvas.toDataURL('image/jpeg', quality));
-    };
-  });
-}
-
 const playerColors = [
   'hsl(var(--primary))',
   'hsl(var(--chart-2))',
@@ -249,10 +224,9 @@ export default function DashboardPage() {
     if (file) {
         setUploadedFile(file);
         const reader = new FileReader();
-        reader.onload = async (event) => {
+        reader.onload = (event) => {
             const result = event.target?.result as string;
-            const resizedImage = await reduceImageSize(result);
-            setUploadedImagePreview(resizedImage);
+            setUploadedImagePreview(result);
         };
         reader.readAsDataURL(file);
     }
@@ -345,8 +319,7 @@ export default function DashboardPage() {
           const content = await imageFile.async('base64');
           const mimeType = `image/${imageFile.name.split('.').pop()}`;
           const dataUri = `data:${mimeType};base64,${content}`;
-          const resizedDataUri = await reduceImageSize(dataUri);
-          await processAndCreateMatch(resizedDataUri, imageFile.name);
+          await processAndCreateMatch(dataUri, imageFile.name);
           createdCount++;
         } catch (err) {
             console.error(`Failed to process ${imageFile.name}:`, err)
