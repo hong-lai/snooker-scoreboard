@@ -297,7 +297,7 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
             <TableRow>
               <TableHead className="w-[50px] text-center">Frame</TableHead>
               <TableHead colSpan={3} className="text-center w-full">{match.player1Name} vs {match.player2Name}</TableHead>
-              <TableHead className="w-[50px] text-center px-1">Tag</TableHead>
+              <TableHead className="w-[50px] text-center p-0">Tag</TableHead>
               {isEditing && <TableHead className="w-[50px] text-center">Actions</TableHead>}
             </TableRow>
           </TableHeader>
@@ -326,8 +326,10 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
                     </TableCell>
                     </>
                  )}
-                <TableCell className="text-center px-1">
-                    <TagIcon tag={frame.tag} />
+                <TableCell className="text-center p-0">
+                    <div className="flex items-center justify-center">
+                        <TagIcon tag={frame.tag} />
+                    </div>
                 </TableCell>
                 {isEditing && (
                     <TableCell className="text-center">
