@@ -537,7 +537,7 @@ export default function DashboardPage() {
             <TabsContent value="wins">
               <Card>
                   <CardHeader>
-                  <CardTitle>Player Rankings</CardTitle>
+                  <CardTitle>Player Rankings by Match Wins</CardTitle>
                   <CardDescription>Total number of matches won by each player per {timePeriod}.</CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -562,8 +562,8 @@ export default function DashboardPage() {
             <TabsContent value="activity">
               <Card>
                   <CardHeader>
-                      <CardTitle>Match Activity</CardTitle>
-                      <CardDescription>Total matches, frames, and average frames per match per {timePeriod}.</CardDescription>
+                      <CardTitle>Match and Frame Activity</CardTitle>
+                      <CardDescription>Total matches and frames played, plus the average frames per match, per {timePeriod}.</CardDescription>
                   </CardHeader>
                   <CardContent>
                       <ResponsiveContainer width="100%" height={300}>
@@ -589,7 +589,7 @@ export default function DashboardPage() {
               <Card>
                   <CardHeader>
                       <CardTitle>Player Performance Timeline</CardTitle>
-                      <CardDescription>Average points scored per frame by each player per {timePeriod}.</CardDescription>
+                      <CardDescription>Average points scored per frame by each player, per {timePeriod}.</CardDescription>
                   </CardHeader>
                   <CardContent>
                       <ResponsiveContainer width="100%" height={300}>
@@ -613,9 +613,9 @@ export default function DashboardPage() {
             <TabsContent value="best_play">
               <Card>
                 <CardHeader>
-                  <CardTitle>Top 10 Best Plays</CardTitle>
+                  <CardTitle>Top 10 Frame Scores</CardTitle>
                   <CardDescription>
-                    Highest single frame scores across all matches.
+                    The highest single-frame scores across all matches for the selected period.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -624,7 +624,7 @@ export default function DashboardPage() {
                       <TableRow>
                         <TableHead>Date</TableHead>
                         <TableHead>Player</TableHead>
-                        <TableHead className="text-right">Frame</TableHead>
+                        <TableHead className="text-right">Frame Score</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -736,5 +736,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    
