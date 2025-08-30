@@ -18,16 +18,16 @@ interface MatchBoardProps {
   onUpdate: () => void;
 }
 
-const TagIcon = ({ tag }: { tag?: string }) => {
+const TagIcon = ({ tag }: { tag?: string | null }) => {
     if (!tag) return null;
 
-    if (tag.toLowerCase().includes('star') || tag.toLowerCase().includes('triangle')) {
-        return <Star className="h-4 w-4 text-yellow-500" title={tag} />;
+    if (tag === 'star') {
+        return <Star className="h-4 w-4 text-yellow-500" title="Star" />;
     }
-    if (tag.toLowerCase().includes('dot') || tag.toLowerCase().includes('circle')) {
-        return <Circle className="h-3 w-3 text-blue-500 fill-current" title={tag} />;
+    if (tag === 'dot') {
+        return <Circle className="h-3 w-3 text-blue-500 fill-current" title="Dot" />;
     }
-    return <span title={tag}>{tag}</span>;
+    return null;
 }
 
 
