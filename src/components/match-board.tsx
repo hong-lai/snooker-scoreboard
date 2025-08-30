@@ -297,7 +297,7 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
             <TableRow>
               <TableHead className="w-[50px] text-center">Frame</TableHead>
               <TableHead colSpan={3} className="text-center w-full">{match.player1Name} vs {match.player2Name}</TableHead>
-              <TableHead className="w-[50px] text-center">Tag</TableHead>
+              <TableHead className="w-[50px] text-center px-1">Tag</TableHead>
               {isEditing && <TableHead className="w-[50px] text-center">Actions</TableHead>}
             </TableRow>
           </TableHeader>
@@ -326,7 +326,7 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
                     </TableCell>
                     </>
                  )}
-                <TableCell className="text-center">
+                <TableCell className="text-center px-1">
                     <TagIcon tag={frame.tag} />
                 </TableCell>
                 {isEditing && (
@@ -372,7 +372,7 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
           <UITableFooter>
             <TableRow>
                 <TableCell className="font-bold text-center">Total</TableCell>
-                <TableCell colSpan={isEditing ? 3 : 2} className="text-right font-bold">{p1TotalScore}</TableCell>
+                <TableCell colSpan={isEditing ? 4 : 2} className="text-right font-bold">{p1TotalScore}</TableCell>
                 <TableCell className="text-center w-[20px]">-</TableCell>
                 <TableCell className="text-left font-bold">{p2TotalScore}</TableCell>
                 <TableCell />
