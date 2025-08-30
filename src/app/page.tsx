@@ -17,7 +17,6 @@ import { Input } from '@/components/ui/input';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 import { translateSnookerScoreFromImage } from '@/ai/flows/translate-snooker-score-from-image';
-import { convertImageToJpeg } from '@/ai/flows/convert-image-to-jpeg';
 import { format, parseISO } from 'date-fns';
 import JSZip from 'jszip';
 import {
@@ -38,6 +37,7 @@ import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import imageCompression from 'browser-image-compression';
 
 
 interface PlayerWinData {
@@ -78,6 +78,35 @@ const playerColors = [
   'hsl(var(--chart-4))',
   'hsl(var(--chart-5))',
 ];
+
+const fileToDataUri = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            resolve(reader.result as string);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+};
+
+const processImage = async (file: File): Promise<File> => {
+    const options = {
+      maxSizeMB: 1,
+      maxWidthOrHeight: 1024,
+      useWebWorker: true,
+    };
+    try {
+      const compressedFile = await imageCompression(file, options);
+      return compressedFile;
+    } catch (error) {
+      console.error('Image compression error:', error);
+      // If compression fails, return the original file but warn the user.
+      // This might still fail on the backend, but it's better than failing silently here.
+      alert('Could not compress image. Uploading original file, which may fail.');
+      return file;
+    }
+};
 
 
 export default function DashboardPage() {
@@ -220,28 +249,20 @@ export default function DashboardPage() {
     }
   }, [user, timePeriod, loadData]);
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setUploadedFile(file);
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const result = event.target?.result as string;
-        setUploadedImagePreview(result);
-      };
-      reader.readAsDataURL(file);
+      const processedFile = await processImage(file);
+      setUploadedFile(processedFile);
+      const dataUri = await fileToDataUri(processedFile);
+      setUploadedImagePreview(dataUri);
     }
   };
 
   const processAndCreateMatch = async (photoDataUri: string, fileName: string) => {
     if (!user) throw new Error("User not authenticated.");
-
-    // Step 1: Convert the image to a standard JPEG format.
-    const conversionResult = await convertImageToJpeg({ photoDataUri });
-    const jpegDataUri = conversionResult.jpegDataUri;
     
-    // Step 2: Use the converted JPEG to extract score information.
-    const result = await translateSnookerScoreFromImage({ photoDataUri: jpegDataUri });
+    const result = await translateSnookerScoreFromImage({ photoDataUri });
 
     const newFrames: Frame[] = result.frames.map(f => ({
         player1Score: f.player1Score,
@@ -259,7 +280,7 @@ export default function DashboardPage() {
       player2TotalFoulPoints: result.player2TotalFoulPoints,
       frames: newFrames,
       status: 'ended', // Assume uploaded scoreboards are for ended matches
-      scoreboardImage: jpegDataUri, // Save the converted JPEG
+      scoreboardImage: photoDataUri,
     };
     await updateMatch(user.uid, updatedMatch);
     return updatedMatch;
