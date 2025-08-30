@@ -37,7 +37,6 @@ import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
 
 
 interface PlayerWinData {
@@ -470,30 +469,13 @@ export default function DashboardPage() {
       <main className="p-4 md:p-8 page-transition">
         {hasData && (
           <Tabs defaultValue="wins" className="mb-8">
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-2">
-                <Carousel
-                  opts={{
-                    align: "start",
-                  }}
-                  className="w-full"
-                >
-                  <CarouselContent>
-                    <TabsList className="p-0 bg-transparent border-b-0">
-                      <CarouselItem className="basis-auto pl-0 pr-1">
-                        <TabsTrigger value="wins">Player Rankings</TabsTrigger>
-                      </CarouselItem>
-                      <CarouselItem className="basis-auto px-1">
-                        <TabsTrigger value="timeline">Match Timeline</TabsTrigger>
-                      </CarouselItem>
-                      <CarouselItem className="basis-auto px-1">
-                        <TabsTrigger value="activity">Match Activity</TabsTrigger>
-                      </CarouselItem>
-                      <CarouselItem className="basis-auto pl-1 pr-0">
-                        <TabsTrigger value="scores">Player Performance</TabsTrigger>
-                      </CarouselItem>
-                    </TabsList>
-                  </CarouselContent>
-                </Carousel>
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-2">
+                <TabsList className="h-auto flex-wrap">
+                    <TabsTrigger value="wins">Player Rankings</TabsTrigger>
+                    <TabsTrigger value="timeline">Match Timeline</TabsTrigger>
+                    <TabsTrigger value="activity">Match Activity</TabsTrigger>
+                    <TabsTrigger value="scores">Player Performance</TabsTrigger>
+                </TabsList>
                  <div className="flex items-center space-x-2 sm:ml-auto">
                     <Label htmlFor="time-period-switch">Year</Label>
                     <Switch
@@ -517,7 +499,7 @@ export default function DashboardPage() {
                       <XAxis dataKey="name" stroke="hsl(var(--foreground))" tick={{fontSize: 12}} />
                       <YAxis stroke="hsl(var(--foreground))" allowDecimals={false} />
                       <Tooltip
-                          cursor={false}
+                          cursor={{ fill: 'transparent' }}
                           content={<CustomTooltip />}
                       />
                       <Legend />
@@ -540,7 +522,7 @@ export default function DashboardPage() {
                               <XAxis dataKey="month" stroke="hsl(var(--foreground))" tick={{fontSize: 12}} />
                               <YAxis stroke="hsl(var(--foreground))" allowDecimals={false} />
                               <Tooltip
-                                  cursor={false}
+                                  cursor={{ fill: 'transparent' }}
                                   content={<CustomTooltip />}
                               />
                               <Legend />
@@ -563,7 +545,7 @@ export default function DashboardPage() {
                               <XAxis dataKey="month" stroke="hsl(var(--foreground))" tick={{fontSize: 12}} />
                               <YAxis stroke="hsl(var(--foreground))" allowDecimals={false} />
                               <Tooltip
-                                  cursor={false}
+                                  cursor={{ fill: 'transparent' }}
                                   content={<CustomTooltip />}
                               />
                               <Legend />
@@ -586,7 +568,7 @@ export default function DashboardPage() {
                               <XAxis dataKey="month" stroke="hsl(var(--foreground))" tick={{fontSize: 12}} />
                               <YAxis stroke="hsl(var(--foreground))" />
                               <Tooltip
-                                  cursor={false}
+                                  cursor={{ fill: 'transparent' }}
                                   content={<CustomTooltip />}
                               />
                               <Legend />
