@@ -151,12 +151,12 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
     const p1TotalScore = editedFrames.reduce((sum, frame) => sum + frame.player1Score, 0);
     const p2TotalScore = editedFrames.reduce((sum, frame) => sum + frame.player2Score, 0);
     
-    if (editedFouls.p1Fouls < p1TotalScore) {
-        toast({variant: 'destructive', title: 'Invalid Foul Points', description: `${editedNames.p1Name}'s foul points cannot be less than their total score.`});
+    if (editedFouls.p1Fouls > p1TotalScore) {
+        toast({variant: 'destructive', title: 'Invalid Foul Points', description: `${editedNames.p1Name}'s foul points cannot be greater than their total score.`});
         return;
     }
-     if (editedFouls.p2Fouls < p2TotalScore) {
-        toast({variant: 'destructive', title: 'Invalid Foul Points', description: `${editedNames.p2Name}'s foul points cannot be less than their total score.`});
+     if (editedFouls.p2Fouls > p2TotalScore) {
+        toast({variant: 'destructive', title: 'Invalid Foul Points', description: `${editedNames.p2Name}'s foul points cannot be greater than their total score.`});
         return;
     }
 
