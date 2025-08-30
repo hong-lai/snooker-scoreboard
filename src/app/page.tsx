@@ -18,7 +18,7 @@ import { Input } from '@/components/ui/input';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 import { translateSnookerScoreFromImage } from '@/ai/flows/translate-snooker-score-from-image';
-import { format, parseISO } from 'date-fns';
+import { format, parse, parseISO } from 'date-fns';
 import JSZip from 'jszip';
 import {
   Bar,
@@ -51,6 +51,7 @@ interface PlayerWinData {
 
 interface MonthlyActivityData {
     month: string;
+    sortKey: Date;
     totalMatches: number;
     totalFrames: number;
     avgFramesPerMatch: number;
@@ -58,11 +59,13 @@ interface MonthlyActivityData {
 
 interface PlayerScoreByMonthData {
   month: string;
+  sortKey: Date;
   [key: string]: any; // Player names as keys
 }
 
 interface PlayerRankingData {
     month: string;
+    sortKey: Date;
     [key: string]: any; // Player names as keys
 }
 
@@ -164,7 +167,6 @@ export default function DashboardPage() {
 
     const players = new Set<string>();
     const timeFormat = period === 'month' ? 'yyyy-MM' : 'yyyy';
-    const displayFormat = period === 'month' ? 'MMM yyyy' : 'yyyy';
 
     allMatches.forEach(match => {
       const matchDate = parseISO(match.createdAt);
@@ -240,37 +242,49 @@ export default function DashboardPage() {
     
     const uniquePlayers = Array.from(players);
     setAllPlayers(uniquePlayers);
+    
+    const displayFormat = period === 'month' ? 'MMM yyyy' : 'yyyy';
 
     const winData = Object.keys(periodPlayerWins)
-      .map(month => {
-        const record: PlayerRankingData = { month: format(parseISO(month), displayFormat) };
+      .map(key => {
+        const sortKey = parse(key, timeFormat, new Date());
+        const record: PlayerRankingData = { 
+          month: format(sortKey, displayFormat),
+          sortKey: sortKey,
+        };
         uniquePlayers.forEach(player => {
-            record[player] = periodPlayerWins[month][player] || 0;
+            record[player] = periodPlayerWins[key][player] || 0;
         });
         return record;
       })
-      .sort((a,b) => new Date(a.month).getTime() - new Date(b.month).getTime());
+      .sort((a,b) => a.sortKey.getTime() - b.sortKey.getTime());
       
     const monthlyData: MonthlyActivityData[] = Object.keys(periodStats)
-      .map(month => {
-        const matchCount = periodStats[month].matchCount;
-        const totalFrames = periodStats[month].totalFrames;
+      .map(key => {
+        const sortKey = parse(key, timeFormat, new Date());
+        const matchCount = periodStats[key].matchCount;
+        const totalFrames = periodStats[key].totalFrames;
         const avgFramesPerMatch = matchCount > 0 ? parseFloat((totalFrames / matchCount).toFixed(1)) : 0;
         
         return {
-          month: format(parseISO(month), displayFormat),
+          month: format(sortKey, displayFormat),
+          sortKey: sortKey,
           totalMatches: matchCount,
           totalFrames: totalFrames,
           avgFramesPerMatch: avgFramesPerMatch
         };
       })
-      .sort((a,b) => new Date(a.month).getTime() - new Date(b.month).getTime());
+      .sort((a,b) => a.sortKey.getTime() - b.sortKey.getTime());
     
     const scoreData = Object.keys(periodPlayerScores)
-        .map(month => {
-            const record: PlayerScoreByMonthData = { month: format(parseISO(month), displayFormat) };
+        .map(key => {
+            const sortKey = parse(key, timeFormat, new Date());
+            const record: PlayerScoreByMonthData = { 
+              month: format(sortKey, displayFormat),
+              sortKey: sortKey
+            };
             uniquePlayers.forEach(player => {
-                const playerData = periodPlayerScores[month][player];
+                const playerData = periodPlayerScores[key][player];
                 if (playerData && playerData.frameCount > 0) {
                     record[player] = parseFloat((playerData.totalScore / playerData.frameCount).toFixed(1));
                 } else {
@@ -279,7 +293,7 @@ export default function DashboardPage() {
             });
             return record;
         })
-        .sort((a,b) => new Date(a.month).getTime() - new Date(b.month).getTime());
+        .sort((a,b) => a.sortKey.getTime() - b.sortKey.getTime());
 
     const top10BestPlays = allBestPlays.sort((a,b) => b.score - a.score).slice(0, 10);
     
@@ -535,14 +549,14 @@ export default function DashboardPage() {
       <main className="p-4 md:p-8 page-transition">
         {hasData && (
           <Tabs defaultValue="wins" className="mb-8">
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-2">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2">
                 <TabsList className="h-auto flex-wrap sm:flex-nowrap sm:overflow-x-auto sm:whitespace-nowrap">
                     <TabsTrigger value="wins">Player Rankings</TabsTrigger>
                     <TabsTrigger value="activity">Match Activity</TabsTrigger>
                     <TabsTrigger value="scores">Player Performance</TabsTrigger>
                     <TabsTrigger value="best_play">Best Play</TabsTrigger>
                 </TabsList>
-                 <div className="flex items-center space-x-2 sm:ml-auto">
+                 <div className="flex items-center space-x-2 shrink-0">
                     <Label htmlFor="time-period-switch">Year</Label>
                     <Switch
                         id="time-period-switch"
@@ -760,4 +774,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
