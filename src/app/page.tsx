@@ -57,6 +57,11 @@ interface PlayerScoreByMonthData {
   [key: string]: any; // Player names as keys
 }
 
+interface PlayerRankingData {
+    month: string;
+    [key: string]: any; // Player names as keys
+}
+
 interface BestPlayTableData {
   date: string;
   player: string;
@@ -122,7 +127,7 @@ export default function DashboardPage() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('month');
-  const [playerWinData, setPlayerWinData] = useState<PlayerWinData[]>([]);
+  const [playerWinData, setPlayerWinData] = useState<PlayerRankingData[]>([]);
   const [monthlyMatchData, setMonthlyMatchData] = useState<MonthlyWinData[]>([]);
   const [playerScoreByMonthData, setPlayerScoreByMonthData] = useState<PlayerScoreByMonthData[]>([]);
   const [bestPlaysTableData, setBestPlaysTableData] = useState<BestPlayTableData[]>([]);
@@ -141,7 +146,7 @@ export default function DashboardPage() {
     const allMatches = await getMatches(user.uid);
     setMatches(allMatches);
 
-    const playerStats: { [key: string]: { wins: number } } = {};
+    const periodPlayerWins: { [key: string]: { [player: string]: number } } = {};
     const periodStats: { [key: string]: { totalFrames: number, matchCount: number } } = {};
     const periodPlayerScores: { 
         [key: string]: { 
@@ -168,11 +173,13 @@ export default function DashboardPage() {
       
       players.add(match.player1Name);
       players.add(match.player2Name);
-
+      
+      if (!periodPlayerWins[periodKey]) {
+        periodPlayerWins[periodKey] = {};
+      }
       if (!periodPlayerScores[periodKey]) {
         periodPlayerScores[periodKey] = {};
       }
-      
       if (!periodStats[periodKey]) {
           periodStats[periodKey] = { totalFrames: 0, matchCount: 0 };
       }
@@ -182,9 +189,6 @@ export default function DashboardPage() {
       }
       periodStats[periodKey].totalFrames += match.frames.length;
 
-      if (!playerStats[match.player1Name]) playerStats[match.player1Name] = { wins: 0 };
-      if (!playerStats[match.player2Name]) playerStats[match.player2Name] = { wins: 0 };
-      
       match.frames.forEach(frame => {
           if (!periodPlayerScores[periodKey][match.player1Name]) {
             periodPlayerScores[periodKey][match.player1Name] = { totalScore: 0, frameCount: 0 };
@@ -225,9 +229,11 @@ export default function DashboardPage() {
         });
 
         if (p1Wins > p2Wins) {
-          playerStats[match.player1Name].wins++;
+            if (!periodPlayerWins[periodKey][match.player1Name]) periodPlayerWins[periodKey][match.player1Name] = 0;
+            periodPlayerWins[periodKey][match.player1Name]++;
         } else if (p2Wins > p1Wins) {
-          playerStats[match.player2Name].wins++;
+            if (!periodPlayerWins[periodKey][match.player2Name]) periodPlayerWins[periodKey][match.player2Name] = 0;
+            periodPlayerWins[periodKey][match.player2Name]++;
         }
       }
     });
@@ -235,12 +241,15 @@ export default function DashboardPage() {
     const uniquePlayers = Array.from(players);
     setAllPlayers(uniquePlayers);
 
-    const winData = Object.keys(playerStats)
-      .map(name => ({
-        name,
-        wins: playerStats[name].wins,
-      }))
-      .sort((a, b) => b.wins - a.wins);
+    const winData = Object.keys(periodPlayerWins)
+      .map(month => {
+        const record: PlayerRankingData = { month: format(parseISO(month), displayFormat) };
+        uniquePlayers.forEach(player => {
+            record[player] = periodPlayerWins[month][player] || 0;
+        });
+        return record;
+      })
+      .sort((a,b) => new Date(a.month).getTime() - new Date(b.month).getTime());
       
     const monthlyData = Object.keys(periodStats)
       .map(month => ({
@@ -526,20 +535,22 @@ export default function DashboardPage() {
               <Card>
                   <CardHeader>
                   <CardTitle>Player Rankings</CardTitle>
-                  <CardDescription>Total number of matches won by each player for the selected period.</CardDescription>
+                  <CardDescription>Total number of matches won by each player per {timePeriod}.</CardDescription>
                   </CardHeader>
                   <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
                       <BarChart data={playerWinData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis dataKey="name" stroke="hsl(var(--foreground))" tick={{fontSize: 12}} />
-                      <YAxis stroke="hsl(var(--foreground))" allowDecimals={false} />
-                      <Tooltip
-                          cursor={{ fill: 'transparent' }}
-                          content={<CustomTooltip />}
-                      />
-                      <Legend />
-                      <Bar dataKey="wins" fill="hsl(var(--primary))" name="Matches Won" />
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis dataKey="month" stroke="hsl(var(--foreground))" tick={{fontSize: 12}} />
+                        <YAxis stroke="hsl(var(--foreground))" allowDecimals={false} />
+                        <Tooltip
+                            cursor={{ fill: 'transparent' }}
+                            content={<CustomTooltip />}
+                        />
+                        <Legend />
+                        {allPlayers.map((player, index) => (
+                            <Bar key={player} dataKey={player} fill={playerColors[index % playerColors.length]} name={player} />
+                        ))}
                       </BarChart>
                   </ResponsiveContainer>
                   </CardContent>
@@ -735,3 +746,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
