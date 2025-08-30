@@ -577,7 +577,11 @@ export default function DashboardPage() {
                     </DialogHeader>
                     <div className="space-y-4">
                         <Input type="file" accept="image/*" onChange={handleImageUpload} ref={fileInputRef} />
-                        {uploadedImagePreview && <Image src={uploadedImagePreview} alt="Uploaded scoreboard" width={400} height={300} className="rounded-md object-contain mx-auto" data-ai-hint="scoreboard photo" />}
+                        {uploadedImagePreview && 
+                            <div className="relative w-full h-64">
+                                <Image src={uploadedImagePreview} alt="Uploaded scoreboard" layout="fill" objectFit="contain" className="rounded-md" data-ai-hint="scoreboard photo" />
+                            </div>
+                        }
                     </div>
                     <DialogFooter>
                         <DialogClose id="close-upload-dialog" asChild><Button variant="ghost">Cancel</Button></DialogClose>
