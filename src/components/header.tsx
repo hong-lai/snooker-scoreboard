@@ -1,6 +1,8 @@
+'use client';
 import Link from 'next/link';
 import { SnookerIcon } from '@/components/icons/snooker-icon';
 import type { ReactNode } from 'react';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 export function Header({ children }: { children?: ReactNode }) {
   return (
@@ -12,7 +14,10 @@ export function Header({ children }: { children?: ReactNode }) {
             Snooker Loopy Scores
           </h1>
         </Link>
-        {children}
+        <div className="flex items-center gap-2">
+          {children}
+          <ThemeToggle />
+        </div>
       </div>
     </header>
   );
