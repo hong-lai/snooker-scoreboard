@@ -219,16 +219,16 @@ export default function DashboardPage() {
     }
   }, [user, timePeriod, loadData]);
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-        setUploadedFile(file);
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            const result = event.target?.result as string;
-            setUploadedImagePreview(result);
-        };
-        reader.readAsDataURL(file);
+      setUploadedFile(file);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const result = event.target?.result as string;
+        setUploadedImagePreview(result);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -259,33 +259,30 @@ export default function DashboardPage() {
   };
 
   const handleTranslateImage = async () => {
-    if (!uploadedFile || !uploadedImagePreview || !user) return;
+    if (!uploadedImagePreview || !uploadedFile) return;
     setIsTranslating(true);
-
+    
     try {
-      const newMatch = await processAndCreateMatch(uploadedImagePreview, uploadedFile.name);
-
-      toast({
-        title: "Match Created!",
-        description: `A new match between ${newMatch.player1Name} and ${newMatch.player2Name} has been created.`
-      });
-
-      router.push(`/match/${newMatch.id}`);
-
+        const newMatch = await processAndCreateMatch(uploadedImagePreview, uploadedFile.name);
+        toast({
+            title: "Match Created!",
+            description: `A new match between ${newMatch.player1Name} and ${newMatch.player2Name} has been created.`
+        });
+        router.push(`/match/${newMatch.id}`);
     } catch (error) {
-      console.error(error);
-      toast({
-        variant: 'destructive',
-        title: "Translation Failed",
-        description: "Could not extract scores from the image. Please try another photo."
-      });
+        console.error(error);
+        toast({
+            variant: 'destructive',
+            title: "Translation Failed",
+            description: "Could not extract scores from the image. Please try another photo."
+        });
     } finally {
-      setIsTranslating(false);
-      setUploadedFile(null);
-      setUploadedImagePreview(null);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-      document.getElementById('close-upload-dialog')?.click();
-      loadData(timePeriod);
+        setIsTranslating(false);
+        setUploadedFile(null);
+        setUploadedImagePreview(null);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+        document.getElementById('close-upload-dialog')?.click();
+        loadData(timePeriod);
     }
   };
 

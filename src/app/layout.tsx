@@ -3,12 +3,22 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { AuthProvider } from '@/hooks/use-auth';
 import { ThemeProvider } from '@/components/theme-provider';
+import { version } from '../../package.json';
 
 export const metadata: Metadata = {
   title: 'Snooker Loopy Scores',
   description: 'An app to record snooker scores, with AI-powered features.',
   robots: 'noindex, nofollow',
 };
+
+function Version() {
+  return (
+    <div className="fixed bottom-2 right-2 text-xs bg-card/60 text-muted-foreground px-2 py-1 rounded-md shadow-sm backdrop-blur-sm z-50">
+      Version {version}
+    </div>
+  )
+}
+
 
 export default function RootLayout({
   children,
@@ -34,6 +44,7 @@ export default function RootLayout({
               {children}
           </AuthProvider>
           <Toaster />
+          <Version />
         </ThemeProvider>
       </body>
     </html>
