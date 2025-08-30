@@ -547,7 +547,7 @@ export default function DashboardPage() {
             </DropdownMenuContent>
         </DropdownMenu>
       </Header>
-      <main className="p-4 md:p-8 page-transition">
+      <main className="container mx-auto p-4 md:p-8 page-transition">
         {hasData && (
           <Tabs defaultValue="wins" className="mb-8">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2">
