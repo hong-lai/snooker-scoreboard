@@ -29,7 +29,7 @@ const TranslateSnookerScoreFromImageOutputSchema = z.object({
       frameNumber: z.number().describe("The number of the frame, which is inside a circle."),
       player1Score: z.number().describe("Player 1's score for the frame."),
       player2Score: z.number().describe("Player 2's score for the frame."),
-      tag: z.string().optional().describe("A special tag (like a star, checkmark, or circle/dot) associated with the frame, if any."),
+      tag: z.string().nullable().optional().describe("A special tag (like a star, checkmark, or circle/dot) associated with the frame, if any. Should be null if not present."),
     })
   ).describe("Array of frame scores for each player, and any associated tags, ordered by frame number."),
 });
@@ -41,6 +41,12 @@ export async function translateSnookerScoreFromImage(
   const result = await translateSnookerScoreFromImageFlow(input);
   // Sort frames by frameNumber before returning to guarantee order.
   result.frames.sort((a, b) => a.frameNumber - b.frameNumber);
+  // Ensure tags are null if undefined
+  result.frames.forEach(frame => {
+    if (frame.tag === undefined) {
+      frame.tag = null;
+    }
+  });
   return result;
 }
 
@@ -56,7 +62,7 @@ const prompt = ai.definePrompt({
   1.  **Identify All Frame Rows:** Look at every row that contains a score.
   2.  **For EACH row, find the circled number first.** This is the 'frameNumber'. For example, a row with ⑩ means 'frameNumber: 10'. A row with ① means 'frameNumber: 1'.
   3.  **Extract Player Scores:** For that same row, find the score in the 'L-Y' format. Be very careful reading the handwritten digits. '43-24' means 'player1Score: 43' and 'player2Score: 24'.
-  4.  **Extract Tag:** Look for any symbol like a star '☆' or a dot '•' on that row. This is the 'tag'.
+  4.  **Extract Tag:** Look for any symbol like a star '☆' or a dot '•' on that row. This is the 'tag'. If no tag exists, the value for 'tag' must be null.
   5.  **Assemble Frame Object:** Create a JSON object for that frame, e.g., { "frameNumber": 10, "player1Score": 10, "player2Score": 46, "tag": "☆" }.
   6.  **Repeat for ALL rows.** You must find all rows with scores.
   7.  **Extract Player Names:** Player 1 is 'L'. Player 2 is 'Y'.
