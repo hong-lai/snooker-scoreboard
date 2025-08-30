@@ -470,8 +470,8 @@ export default function DashboardPage() {
       <main className="p-4 md:p-8 page-transition">
         {hasData && (
           <Tabs defaultValue="wins" className="mb-8">
-            <div className="flex justify-between items-center mb-2">
-                <ScrollArea className="w-full whitespace-nowrap rounded-lg">
+            <div className="flex flex-wrap justify-between items-center gap-y-4 mb-2">
+                <ScrollArea className="w-full sm:w-auto whitespace-nowrap rounded-lg">
                     <TabsList className="inline-flex w-max">
                         <TabsTrigger value="wins">Player Rankings</TabsTrigger>
                         <TabsTrigger value="timeline">Match Timeline</TabsTrigger>
@@ -479,7 +479,7 @@ export default function DashboardPage() {
                         <TabsTrigger value="scores">Player Performance</TabsTrigger>
                     </TabsList>
                 </ScrollArea>
-                 <div className="flex items-center space-x-2 ml-4">
+                 <div className="flex items-center space-x-2 ml-auto">
                     <Label htmlFor="time-period-switch">Year</Label>
                     <Switch
                         id="time-period-switch"
