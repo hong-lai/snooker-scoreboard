@@ -46,6 +46,7 @@ interface PlayerWinData {
 interface MonthlyWinData {
     month: string;
     avgFrames: number;
+    totalFrames: number;
 }
 
 interface PlayerScoreByMonthData {
@@ -143,13 +144,14 @@ export default function DashboardPage() {
         monthlyPlayerScores[monthKey] = {};
       }
       
-      if (match.status === 'ended') {
-          if (!monthlyStats[monthKey]) {
-              monthlyStats[monthKey] = { totalFrames: 0, matchCount: 0 };
-          }
-          monthlyStats[monthKey].matchCount++;
-          monthlyStats[monthKey].totalFrames += match.frames.length;
+      if (!monthlyStats[monthKey]) {
+          monthlyStats[monthKey] = { totalFrames: 0, matchCount: 0 };
       }
+      
+      if (match.status === 'ended') {
+          monthlyStats[monthKey].matchCount++;
+      }
+      monthlyStats[monthKey].totalFrames += match.frames.length;
 
       if (!playerStats[match.player1Name]) playerStats[match.player1Name] = { wins: 0 };
       if (!playerStats[match.player2Name]) playerStats[match.player2Name] = { wins: 0 };
@@ -199,6 +201,7 @@ export default function DashboardPage() {
       .map(month => ({
         month: format(parseISO(month), 'MMM yyyy'),
         avgFrames: monthlyStats[month].matchCount > 0 ? parseFloat((monthlyStats[month].totalFrames / monthlyStats[month].matchCount).toFixed(1)) : 0,
+        totalFrames: monthlyStats[month].totalFrames,
       }))
       .sort((a,b) => new Date(a.month).getTime() - new Date(b.month).getTime());
     
@@ -464,6 +467,7 @@ export default function DashboardPage() {
                 <TabsList className="inline-flex w-max">
                     <TabsTrigger value="wins">Player Rankings</TabsTrigger>
                     <TabsTrigger value="timeline">Match Timeline</TabsTrigger>
+                    <TabsTrigger value="activity">Match Activity</TabsTrigger>
                     <TabsTrigger value="scores">Player Performance</TabsTrigger>
                 </TabsList>
             </ScrollArea>
@@ -509,6 +513,29 @@ export default function DashboardPage() {
                               <Legend />
                               <Line type="monotone" dataKey="avgFrames" stroke="hsl(var(--primary))" name="Avg. Frames / Match" />
                           </LineChart>
+                      </ResponsiveContainer>
+                  </CardContent>
+              </Card>
+            </TabsContent>
+            <TabsContent value="activity">
+              <Card>
+                  <CardHeader>
+                      <CardTitle>Match Activity</CardTitle>
+                      <CardDescription>Total frames played per month.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                      <ResponsiveContainer width="100%" height={300}>
+                          <BarChart data={monthlyMatchData}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                              <XAxis dataKey="month" stroke="hsl(var(--foreground))" tick={{fontSize: 12}} />
+                              <YAxis stroke="hsl(var(--foreground))" allowDecimals={false} />
+                              <Tooltip
+                                  cursor={false}
+                                  content={<CustomTooltip />}
+                              />
+                              <Legend />
+                              <Bar dataKey="totalFrames" fill="hsl(var(--primary))" name="Total Frames" />
+                          </BarChart>
                       </ResponsiveContainer>
                   </CardContent>
               </Card>

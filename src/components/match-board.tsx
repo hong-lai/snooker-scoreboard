@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { verifySnookerScoreEntry } from '@/ai/flows/verify-snooker-score-entry';
 import { Loader2, Save, Trophy, Star, ShieldAlert, TrendingUp, Circle, FileImage, Edit, Check } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface MatchBoardProps {
   initialMatch: Match;
@@ -246,14 +247,21 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
         </Table>
       </CardContent>
       <CardFooter className="flex-col sm:flex-row gap-2">
+      <TooltipProvider>
         {match.scoreboardImage && (
             <Dialog>
-                <DialogTrigger asChild>
-                    <Button variant="secondary" className="w-full sm:w-auto">
-                        <FileImage className="mr-2 h-4 w-4" />
-                        View Scoreboard
-                    </Button>
-                </DialogTrigger>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <DialogTrigger asChild>
+                            <Button variant="secondary" size="icon">
+                                <FileImage />
+                            </Button>
+                        </DialogTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>View Scoreboard</p>
+                    </TooltipContent>
+                </Tooltip>
                 <DialogContent className="max-w-4xl">
                     <DialogHeader>
                         <DialogTitle>Original Scoreboard</DialogTitle>
@@ -291,10 +299,18 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
         )}
         
         {isViewMode && (
-             <Button onClick={() => setIsEditing(true)} className="w-full sm:w-auto sm:ml-auto">
-                <Edit className="mr-2 h-4 w-4" /> Edit Match
-            </Button>
+             <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button onClick={() => setIsEditing(true)} size="icon" className="sm:ml-auto">
+                        <Edit />
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>Edit Match</p>
+                </TooltipContent>
+            </Tooltip>
         )}
+        </TooltipProvider>
       </CardFooter>
     </Card>
   );
