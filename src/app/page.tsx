@@ -92,7 +92,7 @@ const fileToDataUri = (file: File): Promise<string> => {
 
 const processImage = async (file: File): Promise<File> => {
     const options = {
-      maxSizeMB: 1,
+      maxSizeMB: 0.5,
       maxWidthOrHeight: 1024,
       useWebWorker: true,
     };
