@@ -49,7 +49,7 @@ interface PlayerWinData {
 
 interface MonthlyWinData {
     month: string;
-    avgFrames: number;
+    totalMatches: number;
     totalFrames: number;
 }
 
@@ -179,9 +179,7 @@ export default function DashboardPage() {
           periodStats[periodKey] = { totalFrames: 0, matchCount: 0 };
       }
       
-      if (match.status === 'ended') {
-          periodStats[periodKey].matchCount++;
-      }
+      periodStats[periodKey].matchCount++;
       periodStats[periodKey].totalFrames += match.frames.length;
 
       match.frames.forEach(frame => {
@@ -251,7 +249,7 @@ export default function DashboardPage() {
     const monthlyData = Object.keys(periodStats)
       .map(month => ({
         month: format(parseISO(month), displayFormat),
-        avgFrames: periodStats[month].matchCount > 0 ? parseFloat((periodStats[month].totalFrames / periodStats[month].matchCount).toFixed(1)) : 0,
+        totalMatches: periodStats[month].matchCount,
         totalFrames: periodStats[month].totalFrames,
       }))
       .sort((a,b) => new Date(a.month).getTime() - new Date(b.month).getTime());
@@ -513,7 +511,6 @@ export default function DashboardPage() {
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-2">
                 <TabsList className="h-auto flex-wrap sm:flex-nowrap sm:overflow-x-auto sm:whitespace-nowrap">
                     <TabsTrigger value="wins">Player Rankings</TabsTrigger>
-                    <TabsTrigger value="timeline">Match Timeline</TabsTrigger>
                     <TabsTrigger value="activity">Match Activity</TabsTrigger>
                     <TabsTrigger value="scores">Player Performance</TabsTrigger>
                     <TabsTrigger value="best_play">Best Play</TabsTrigger>
@@ -553,34 +550,11 @@ export default function DashboardPage() {
                   </CardContent>
               </Card>
             </TabsContent>
-            <TabsContent value="timeline">
-              <Card>
-                  <CardHeader>
-                      <CardTitle>Match Timeline</CardTitle>
-                      <CardDescription>Average frames played per match each {timePeriod}.</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                      <ResponsiveContainer width="100%" height={300}>
-                          <LineChart data={monthlyMatchData}>
-                              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                              <XAxis dataKey="month" stroke="hsl(var(--foreground))" tick={{fontSize: 12}} />
-                              <YAxis stroke="hsl(var(--foreground))" allowDecimals={false} />
-                              <Tooltip
-                                  cursor={{ fill: 'transparent' }}
-                                  content={<CustomTooltip />}
-                              />
-                              <Legend />
-                              <Line type="monotone" dataKey="avgFrames" stroke="hsl(var(--primary))" name="Avg. Frames / Match" />
-                          </LineChart>
-                      </ResponsiveContainer>
-                  </CardContent>
-              </Card>
-            </TabsContent>
             <TabsContent value="activity">
               <Card>
                   <CardHeader>
                       <CardTitle>Match Activity</CardTitle>
-                      <CardDescription>Total frames played per {timePeriod}.</CardDescription>
+                      <CardDescription>Total matches played per {timePeriod}.</CardDescription>
                   </CardHeader>
                   <CardContent>
                       <ResponsiveContainer width="100%" height={300}>
@@ -593,7 +567,7 @@ export default function DashboardPage() {
                                   content={<CustomTooltip />}
                               />
                               <Legend />
-                              <Bar dataKey="totalFrames" fill="hsl(var(--primary))" name="Total Frames" />
+                              <Bar dataKey="totalMatches" fill="hsl(var(--primary))" name="Total Matches" />
                           </BarChart>
                       </ResponsiveContainer>
                   </CardContent>
@@ -750,3 +724,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
