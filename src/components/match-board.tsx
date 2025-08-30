@@ -374,10 +374,9 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
           <UITableFooter>
             <TableRow>
                 <TableCell className="font-bold text-center">Total</TableCell>
-                <TableCell colSpan={isEditing ? 4 : 2} className="text-right font-bold">{p1TotalScore}</TableCell>
+                <TableCell colSpan={isEditing ? 3 : 2} className="text-right font-bold">{p1TotalScore}</TableCell>
                 <TableCell className="text-center w-[20px]">-</TableCell>
                 <TableCell className="text-left font-bold">{p2TotalScore}</TableCell>
-                <TableCell />
             </TableRow>
           </UITableFooter>
         </Table>
