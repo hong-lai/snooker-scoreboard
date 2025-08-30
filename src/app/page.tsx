@@ -25,6 +25,7 @@ import {
   BarChart,
   Line,
   LineChart,
+  ComposedChart,
   CartesianGrid,
   XAxis,
   YAxis,
@@ -47,10 +48,11 @@ interface PlayerWinData {
   wins: number;
 }
 
-interface MonthlyWinData {
+interface MonthlyActivityData {
     month: string;
     totalMatches: number;
     totalFrames: number;
+    avgFramesPerMatch: number;
 }
 
 interface PlayerScoreByMonthData {
@@ -130,7 +132,7 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('month');
   const [playerWinData, setPlayerWinData] = useState<PlayerRankingData[]>([]);
-  const [monthlyMatchData, setMonthlyMatchData] = useState<MonthlyWinData[]>([]);
+  const [monthlyMatchData, setMonthlyMatchData] = useState<MonthlyActivityData[]>([]);
   const [playerScoreByMonthData, setPlayerScoreByMonthData] = useState<PlayerScoreByMonthData[]>([]);
   const [bestPlaysTableData, setBestPlaysTableData] = useState<BestPlayTableData[]>([]);
   const [allPlayers, setAllPlayers] = useState<string[]>([]);
@@ -246,12 +248,19 @@ export default function DashboardPage() {
       })
       .sort((a,b) => new Date(a.month).getTime() - new Date(b.month).getTime());
       
-    const monthlyData = Object.keys(periodStats)
-      .map(month => ({
-        month: format(parseISO(month), displayFormat),
-        totalMatches: periodStats[month].matchCount,
-        totalFrames: periodStats[month].totalFrames,
-      }))
+    const monthlyData: MonthlyActivityData[] = Object.keys(periodStats)
+      .map(month => {
+        const matchCount = periodStats[month].matchCount;
+        const totalFrames = periodStats[month].totalFrames;
+        const avgFramesPerMatch = matchCount > 0 ? parseFloat((totalFrames / matchCount).toFixed(1)) : 0;
+        
+        return {
+          month: format(parseISO(month), displayFormat),
+          totalMatches: matchCount,
+          totalFrames: totalFrames,
+          avgFramesPerMatch: avgFramesPerMatch
+        };
+      })
       .sort((a,b) => new Date(a.month).getTime() - new Date(b.month).getTime());
     
     const scoreData = Object.keys(periodPlayerScores)
@@ -536,7 +545,7 @@ export default function DashboardPage() {
                       <BarChart data={playerWinData}>
                         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                         <XAxis dataKey="month" stroke="hsl(var(--foreground))" tick={{fontSize: 12}} />
-                        <YAxis stroke="hsl(var(--foreground))" allowDecals={false} />
+                        <YAxis stroke="hsl(var(--foreground))" allowDecimals={false} />
                         <Tooltip
                             cursor={{ fill: 'transparent' }}
                             content={<CustomTooltip />}
@@ -554,22 +563,24 @@ export default function DashboardPage() {
               <Card>
                   <CardHeader>
                       <CardTitle>Match Activity</CardTitle>
-                      <CardDescription>Total matches and frames played per {timePeriod}.</CardDescription>
+                      <CardDescription>Total matches, frames, and average frames per match per {timePeriod}.</CardDescription>
                   </CardHeader>
                   <CardContent>
                       <ResponsiveContainer width="100%" height={300}>
-                          <BarChart data={monthlyMatchData}>
+                          <ComposedChart data={monthlyMatchData}>
                               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                               <XAxis dataKey="month" stroke="hsl(var(--foreground))" tick={{fontSize: 12}} />
-                              <YAxis stroke="hsl(var(--foreground))" allowDecimals={false} />
+                              <YAxis yAxisId="left" stroke="hsl(var(--foreground))" allowDecimals={false} />
+                              <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--foreground))" />
                               <Tooltip
                                   cursor={{ fill: 'transparent' }}
                                   content={<CustomTooltip />}
                               />
                               <Legend />
-                              <Bar dataKey="totalMatches" fill="hsl(var(--primary))" name="Total Matches" />
-                              <Bar dataKey="totalFrames" fill="hsl(var(--chart-2))" name="Total Frames" />
-                          </BarChart>
+                              <Bar yAxisId="left" dataKey="totalMatches" fill="hsl(var(--primary))" name="Total Matches" />
+                              <Bar yAxisId="left" dataKey="totalFrames" fill="hsl(var(--chart-2))" name="Total Frames" />
+                              <Line yAxisId="right" type="monotone" dataKey="avgFramesPerMatch" strokeWidth={2} stroke="hsl(var(--chart-4))" name="Avg Frames / Match" />
+                          </ComposedChart>
                       </ResponsiveContainer>
                   </CardContent>
               </Card>
