@@ -6,11 +6,11 @@ import { ThemeToggle } from '@/components/theme-toggle';
 
 export function Header({ children }: { children?: ReactNode }) {
   return (
-    <header className="bg-card border-b">
+    <header className="bg-card/80 border-b backdrop-blur-lg">
       <div className="container mx-auto flex items-center justify-between p-4">
         <Link href="/" className="flex items-center gap-2">
           <SnookerIcon className="h-7 w-7 text-primary" />
-          <h1 className="text-xl font-bold tracking-tight text-foreground">
+          <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-primary to-destructive bg-clip-text text-transparent">
             Snooker Loopy Scores
           </h1>
         </Link>

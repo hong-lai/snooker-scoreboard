@@ -470,7 +470,7 @@ export default function DashboardPage() {
         {hasData && (
           <Tabs defaultValue="wins" className="mb-8">
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-2">
-                <TabsList className="h-auto flex-wrap">
+                <TabsList className="h-auto flex-wrap sm:flex-nowrap sm:overflow-x-auto sm:whitespace-nowrap">
                     <TabsTrigger value="wins">Player Rankings</TabsTrigger>
                     <TabsTrigger value="timeline">Match Timeline</TabsTrigger>
                     <TabsTrigger value="activity">Match Activity</TabsTrigger>
@@ -585,7 +585,7 @@ export default function DashboardPage() {
 
 
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-          <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Match History</h2>
+          <h2 className="text-2xl md:text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-destructive bg-clip-text text-transparent">Match History</h2>
           <div className="flex gap-2 w-full sm:w-auto">
             <Dialog>
                 <DialogTrigger asChild>
