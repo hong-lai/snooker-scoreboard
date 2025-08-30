@@ -8,9 +8,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Trophy } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
+import { SnookerIcon } from '@/components/icons/snooker-icon';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -65,9 +66,9 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
       <div className="flex items-center gap-2 mb-6">
-        <Trophy className="h-8 w-8 text-primary" />
+        <SnookerIcon className="h-8 w-8 text-primary" />
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
-          SnookerScoreMate
+          Snooker Loopy Scores
         </h1>
       </div>
       <Card className="w-full max-w-sm">

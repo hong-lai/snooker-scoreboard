@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { AuthProvider } from '@/hooks/use-auth';
 
 export const metadata: Metadata = {
-  title: 'SnookerScoreMate',
+  title: 'Snooker Loopy Scores',
   description: 'An app to record snooker scores, with AI-powered features.',
   robots: 'noindex, nofollow',
 };
