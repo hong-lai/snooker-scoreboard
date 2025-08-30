@@ -477,18 +477,25 @@ export default function DashboardPage() {
                     align: "start",
                     dragFree: true,
                   }}
-                  className="w-full max-w-sm sm:max-w-md"
+                  className="w-full"
                 >
-                  <CarouselContent className="-ml-1">
-                      <TabsList className="ml-1">
-                          <TabsTrigger value="wins">Player Rankings</TabsTrigger>
-                          <TabsTrigger value="timeline">Match Timeline</TabsTrigger>
-                          <TabsTrigger value="activity">Match Activity</TabsTrigger>
-                          <TabsTrigger value="scores">Player Performance</TabsTrigger>
-                      </TabsList>
+                  <CarouselContent>
+                    <TabsList className="p-0 bg-transparent border-b-0">
+                      <CarouselItem className="basis-auto pl-0 pr-1">
+                        <TabsTrigger value="wins">Player Rankings</TabsTrigger>
+                      </CarouselItem>
+                      <CarouselItem className="basis-auto px-1">
+                        <TabsTrigger value="timeline">Match Timeline</TabsTrigger>
+                      </CarouselItem>
+                      <CarouselItem className="basis-auto px-1">
+                        <TabsTrigger value="activity">Match Activity</TabsTrigger>
+                      </CarouselItem>
+                      <CarouselItem className="basis-auto pl-1 pr-0">
+                        <TabsTrigger value="scores">Player Performance</TabsTrigger>
+                      </CarouselItem>
+                    </TabsList>
                   </CarouselContent>
                 </Carousel>
-
                  <div className="flex items-center space-x-2 sm:ml-auto">
                     <Label htmlFor="time-period-switch">Year</Label>
                     <Switch
@@ -577,7 +584,7 @@ export default function DashboardPage() {
                   <CardContent>
                       <ResponsiveContainer width="100%" height={300}>
                           <LineChart data={playerScoreByMonthData}>
-                              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                              <CartesianGrid strokeDasharray="3_3" stroke="hsl(var(--border))" />
                               <XAxis dataKey="month" stroke="hsl(var(--foreground))" tick={{fontSize: 12}} />
                               <YAxis stroke="hsl(var(--foreground))" />
                               <Tooltip
