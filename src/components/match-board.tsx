@@ -182,19 +182,19 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
                 </TableCell>
               </TableRow>
             ))}
-            {match.status === 'playing' && (
-              <TableRow>
-                <TableCell className="font-medium text-center">{match.frames.length + 1}</TableCell>
-                <TableCell className="text-right" colSpan={3}>
-                  <div className="flex items-center justify-center gap-1">
-                    <Input name="p1Score" value={newFrame.p1Score} onChange={handleInputChange} className="w-24 h-8 text-right" placeholder="P1 Score"/>
-                    <span className="mx-2">vs</span>
-                    <Input name="p2Score" value={newFrame.p2Score} onChange={handleInputChange} className="w-24 h-8" placeholder="P2 Score"/>
-                  </div>
-                </TableCell>
-                <TableCell />
-              </TableRow>
-            )}
+            
+            <TableRow>
+              <TableCell className="font-medium text-center">{match.frames.length + 1}</TableCell>
+              <TableCell className="text-right" colSpan={3}>
+                <div className="flex items-center justify-center gap-1">
+                  <Input name="p1Score" value={newFrame.p1Score} onChange={handleInputChange} className="w-24 h-8 text-right" placeholder="P1 Score"/>
+                  <span className="mx-2">vs</span>
+                  <Input name="p2Score" value={newFrame.p2Score} onChange={handleInputChange} className="w-24 h-8" placeholder="P2 Score"/>
+                </div>
+              </TableCell>
+              <TableCell />
+            </TableRow>
+            
           </TableBody>
           <UITableFooter>
             <TableRow>
@@ -229,12 +229,13 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
                 </DialogContent>
             </Dialog>
         )}
+        
+        <Button onClick={handleSaveFrame} disabled={isSaving || (!newFrame.p1Score && !newFrame.p2Score)} className="w-full sm:w-auto">
+            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Save className="mr-2 h-4 w-4" /> Save Frame
+        </Button>
         {match.status === 'playing' ? (
             <>
-                <Button onClick={handleSaveFrame} disabled={isSaving || (!newFrame.p1Score && !newFrame.p2Score)} className="w-full sm:w-auto">
-                    {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    <Save className="mr-2 h-4 w-4" /> Save Frame
-                </Button>
                 <Button onClick={handleEndMatch} variant="destructive" disabled={isEndingMatch} className="w-full sm:w-auto sm:ml-auto">
                     {isEndingMatch && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     End Match

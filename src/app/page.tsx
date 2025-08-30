@@ -33,6 +33,8 @@ import { TooltipProps } from 'recharts';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
+import { ScrollArea } from '@/components/ui/scroll-area';
+
 
 interface PlayerWinData {
   name: string;
@@ -413,11 +415,13 @@ export default function DashboardPage() {
       <main className="p-4 md:p-8 page-transition">
         {hasData && (
           <Tabs defaultValue="wins" className="mb-8">
-            <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 sm:w-auto">
-              <TabsTrigger value="wins">Player Wins</TabsTrigger>
-              <TabsTrigger value="timeline">Match Timeline</TabsTrigger>
-              <TabsTrigger value="scores">Player Scores</TabsTrigger>
-            </TabsList>
+            <ScrollArea className="w-full whitespace-nowrap rounded-lg">
+                <TabsList className="inline-flex w-max">
+                    <TabsTrigger value="wins">Player Wins</TabsTrigger>
+                    <TabsTrigger value="timeline">Match Timeline</TabsTrigger>
+                    <TabsTrigger value="scores">Player Scores</TabsTrigger>
+                </TabsList>
+            </ScrollArea>
             <TabsContent value="wins">
               <Card>
                   <CardHeader>
