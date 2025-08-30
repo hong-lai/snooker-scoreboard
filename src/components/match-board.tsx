@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { Match, Frame } from '@/lib/types';
 import { updateMatch } from '@/lib/store';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 import { verifySnookerScoreEntry } from '@/ai/flows/verify-snooker-score-entry';
-import { Loader2, Save, Trophy, Star, ShieldAlert, TrendingUp, Circle, FileImage } from 'lucide-react';
+import { Loader2, Save, Trophy, Star, ShieldAlert, TrendingUp, Circle, FileImage, Edit, Check } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 
 interface MatchBoardProps {
@@ -30,14 +30,21 @@ const TagIcon = ({ tag }: { tag?: string | null }) => {
     return null;
 }
 
-
 export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
   const { user } = useAuth();
   const [match, setMatch] = useState(initialMatch);
+  const [editedFrames, setEditedFrames] = useState<Frame[]>(initialMatch.frames);
   const [newFrame, setNewFrame] = useState({ p1Score: '', p2Score: '' });
   const [isSaving, setIsSaving] = useState(false);
   const [isEndingMatch, setIsEndingMatch] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    setMatch(initialMatch);
+    setEditedFrames(initialMatch.frames);
+  }, [initialMatch]);
+
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -45,46 +52,58 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
       setNewFrame(prev => ({ ...prev, [name]: value }));
     }
   };
+  
+  const handleFrameInputChange = (index: number, field: 'player1Score' | 'player2Score', value: string) => {
+    if (/^\d*$/.test(value)) {
+        const updatedFrames = [...editedFrames];
+        updatedFrames[index] = { ...updatedFrames[index], [field]: parseInt(value) || 0 };
+        setEditedFrames(updatedFrames);
+    }
+  }
 
-  const handleSaveFrame = async () => {
+  const handleSaveChanges = async () => {
     if (!user) return;
     setIsSaving(true);
+    
+    let framesToSave = [...editedFrames];
+
     const p1s = parseInt(newFrame.p1Score) || 0;
     const p2s = parseInt(newFrame.p2Score) || 0;
+    
+    if (newFrame.p1Score || newFrame.p2Score) {
+       const verificationResult = await verifySnookerScoreEntry({
+          player1Score: p1s,
+          player2Score: p2s,
+        });
 
-    const verificationResult = await verifySnookerScoreEntry({
-      player1Score: p1s,
-      player2Score: p2s,
-    });
-
-    if (!verificationResult.isValid) {
-      toast({
-        variant: 'destructive',
-        title: 'Invalid Score Entry',
-        description: <p className="font-code">{verificationResult.warningMessage}</p>,
-      });
-      setIsSaving(false);
-      return;
+        if (!verificationResult.isValid) {
+          toast({
+            variant: 'destructive',
+            title: 'Invalid Score Entry in New Frame',
+            description: <p className="font-code">{verificationResult.warningMessage}</p>,
+          });
+          setIsSaving(false);
+          return;
+        }
+        
+        framesToSave.push({ player1Score: p1s, player2Score: p2s });
     }
 
-    const frame: Frame = {
-      player1Score: p1s,
-      player2Score: p2s,
-    };
-
-    const updatedMatch = { ...match, frames: [...match.frames, frame] };
+    const updatedMatch = { ...match, frames: framesToSave };
     
     try {
         await updateMatch(user.uid, updatedMatch);
         setMatch(updatedMatch);
+        setEditedFrames(framesToSave);
         setNewFrame({ p1Score: '', p2Score: '' });
+        setIsEditing(false); // Exit editing mode after saving
         onUpdate();
+        toast({ title: "Changes Saved", description: "The match has been updated." });
     } catch(e) {
-        toast({variant: 'destructive', title: "Error Saving", description: "Could not save the frame."})
+        toast({variant: 'destructive', title: "Error Saving", description: "Could not save your changes."})
     } finally {
         setIsSaving(false);
     }
-    
   };
 
   const handleEndMatch = async () => {
@@ -101,16 +120,19 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
         setIsEndingMatch(false);
     }
   };
+  
+  const handleCancelEdit = () => {
+    setEditedFrames(match.frames);
+    setIsEditing(false);
+  }
 
-  let p1Wins = 0;
-  let p2Wins = 0;
-  match.frames.forEach(frame => {
-    if (frame.player1Score > frame.player2Score) p1Wins++;
-    else if (frame.player2Score > frame.player1Score) p2Wins++;
-  });
+  const p1Wins = match.frames.reduce((acc, frame) => acc + (frame.player1Score > frame.player2Score ? 1 : 0), 0);
+  const p2Wins = match.frames.reduce((acc, frame) => acc + (frame.player2Score > frame.player1Score ? 1 : 0), 0);
 
-  const p1TotalScore = match.frames.reduce((sum, frame) => sum + frame.player1Score, 0);
-  const p2TotalScore = match.frames.reduce((sum, frame) => sum + frame.player2Score, 0);
+  const p1TotalScore = editedFrames.reduce((sum, frame) => sum + frame.player1Score, 0);
+  const p2TotalScore = editedFrames.reduce((sum, frame) => sum + frame.player2Score, 0);
+
+  const isViewMode = match.status === 'ended' && !isEditing;
 
   return (
     <Card>
@@ -167,33 +189,49 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {match.frames.map((frame, index) => (
+            {editedFrames.map((frame, index) => (
               <TableRow key={index} className={frame.player1Score > frame.player2Score ? 'bg-primary/5' : frame.player2Score > frame.player1Score ? 'bg-accent/5' : ''}>
                 <TableCell className="font-medium text-center">{index + 1}</TableCell>
-                <TableCell className="text-right">
-                  <span className={frame.player1Score > frame.player2Score ? 'font-bold' : ''}>{frame.player1Score}</span>
-                </TableCell>
-                <TableCell className="text-center w-[20px]">-</TableCell>
-                <TableCell className="text-left">
-                  <span className={frame.player2Score > frame.player1Score ? 'font-bold' : ''}>{frame.player2Score}</span>
-                </TableCell>
+                 {isEditing ? (
+                    <>
+                    <TableCell className="text-right p-1">
+                      <Input value={frame.player1Score} onChange={(e) => handleFrameInputChange(index, 'player1Score', e.target.value)} className="w-20 h-8 text-right mx-auto"/>
+                    </TableCell>
+                    <TableCell className="text-center w-[20px] p-1">-</TableCell>
+                    <TableCell className="text-left p-1">
+                       <Input value={frame.player2Score} onChange={(e) => handleFrameInputChange(index, 'player2Score', e.target.value)} className="w-20 h-8"/>
+                    </TableCell>
+                    </>
+                 ) : (
+                    <>
+                    <TableCell className="text-right">
+                      <span className={frame.player1Score > frame.player2Score ? 'font-bold' : ''}>{frame.player1Score}</span>
+                    </TableCell>
+                    <TableCell className="text-center w-[20px]">-</TableCell>
+                    <TableCell className="text-left">
+                      <span className={frame.player2Score > frame.player1Score ? 'font-bold' : ''}>{frame.player2Score}</span>
+                    </TableCell>
+                    </>
+                 )}
                 <TableCell className="text-center">
                     <TagIcon tag={frame.tag} />
                 </TableCell>
               </TableRow>
             ))}
             
-            <TableRow>
-              <TableCell className="font-medium text-center">{match.frames.length + 1}</TableCell>
-              <TableCell className="text-right" colSpan={3}>
-                <div className="flex items-center justify-center gap-1">
-                  <Input name="p1Score" value={newFrame.p1Score} onChange={handleInputChange} className="w-24 h-8 text-right" placeholder="P1 Score"/>
-                  <span className="mx-2">vs</span>
-                  <Input name="p2Score" value={newFrame.p2Score} onChange={handleInputChange} className="w-24 h-8" placeholder="P2 Score"/>
-                </div>
-              </TableCell>
-              <TableCell />
-            </TableRow>
+            {!isViewMode && (
+                <TableRow>
+                    <TableCell className="font-medium text-center">{editedFrames.length + 1}</TableCell>
+                    <TableCell className="text-right" colSpan={3}>
+                        <div className="flex items-center justify-center gap-1">
+                        <Input name="p1Score" value={newFrame.p1Score} onChange={handleInputChange} className="w-24 h-8 text-right" placeholder="P1 Score"/>
+                        <span className="mx-2">vs</span>
+                        <Input name="p2Score" value={newFrame.p2Score} onChange={handleInputChange} className="w-24 h-8" placeholder="P2 Score"/>
+                        </div>
+                    </TableCell>
+                    <TableCell />
+                </TableRow>
+            )}
             
           </TableBody>
           <UITableFooter>
@@ -230,19 +268,32 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
             </Dialog>
         )}
         
-        <Button onClick={handleSaveFrame} disabled={isSaving || (!newFrame.p1Score && !newFrame.p2Score)} className="w-full sm:w-auto">
-            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            <Save className="mr-2 h-4 w-4" /> Save Frame
-        </Button>
-        {match.status === 'playing' ? (
-            <>
-                <Button onClick={handleEndMatch} variant="destructive" disabled={isEndingMatch} className="w-full sm:w-auto sm:ml-auto">
-                    {isEndingMatch && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    End Match
-                </Button>
-            </>
-        ) : (
-             <div className="flex-1" /> // Spacer
+        {isEditing && (
+            <Button variant="outline" onClick={handleCancelEdit} className="w-full sm:w-auto">Cancel</Button>
+        )}
+        
+        {!isViewMode && (
+            <Button onClick={handleSaveChanges} disabled={isSaving} className="w-full sm:w-auto">
+                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <Save className="mr-2 h-4 w-4" /> Save Changes
+            </Button>
+        )}
+
+        {match.status === 'playing' && (
+            <Button onClick={handleEndMatch} variant="destructive" disabled={isEndingMatch} className="w-full sm:w-auto sm:ml-auto">
+                {isEndingMatch && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                End Match
+            </Button>
+        )}
+
+        {isViewMode && (
+          <div className="flex-1" /> // Spacer
+        )}
+        
+        {isViewMode && (
+             <Button onClick={() => setIsEditing(true)} className="w-full sm:w-auto sm:ml-auto">
+                <Edit className="mr-2 h-4 w-4" /> Edit Match
+            </Button>
         )}
       </CardFooter>
     </Card>
