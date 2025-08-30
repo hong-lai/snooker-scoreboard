@@ -6,7 +6,6 @@ export interface Frame {
 
 export interface Match {
   id: string;
-  userId: string;
   player1Name: string;
   player2Name:string;
   frames: Frame[];
@@ -15,4 +14,5 @@ export interface Match {
   status: 'playing' | 'ended';
   createdAt: string;
   scoreboardImage?: string;
+  userId?: string; // Optional because it's not stored in the doc itself, but useful on the client
 }

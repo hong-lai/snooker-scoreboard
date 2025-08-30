@@ -24,9 +24,8 @@ export const getMatchById = async (userId: string, id: string): Promise<Match | 
 
     if (matchDoc.exists()) {
         const data = matchDoc.data();
-        if (data.userId === userId) {
-            return { id: matchDoc.id, ...data } as Match;
-        }
+        // The document path already ensures it belongs to the user, no need for an additional check here.
+        return { id: matchDoc.id, ...data } as Match;
     }
     return null;
 };
@@ -34,7 +33,6 @@ export const getMatchById = async (userId: string, id: string): Promise<Match | 
 export const createMatch = async (userId: string, player1Name: string, player2Name: string, createdAt?: Date): Promise<Match> => {
     const matchesCol = getMatchesCollection(userId);
     const newMatchData = {
-        userId,
         player1Name,
         player2Name,
         frames: [],
@@ -49,12 +47,13 @@ export const createMatch = async (userId: string, player1Name: string, player2Na
     return {
         id: docRef.id,
         ...newMatchData,
-    };
+    } as Match;
 };
 
 export const updateMatch = async (userId: string, updatedMatch: Match): Promise<Match> => {
     const matchDocRef = doc(db, 'users', userId, MATCHES_COLLECTION, updatedMatch.id);
-    const { id, ...matchData } = updatedMatch;
+    // The `userId` property should not be part of the match document itself.
+    const { id, userId: matchUserId, ...matchData } = updatedMatch;
     await updateDoc(matchDocRef, matchData);
     return updatedMatch;
 };
