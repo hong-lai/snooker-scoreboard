@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 import { translateSnookerScoreFromImage } from '@/ai/flows/translate-snooker-score-from-image';
+import { convertImageToJpeg } from '@/ai/flows/convert-image-to-jpeg';
 import { format, parseISO } from 'date-fns';
 import JSZip from 'jszip';
 import {
@@ -235,7 +236,13 @@ export default function DashboardPage() {
   const processAndCreateMatch = async (photoDataUri: string, fileName: string) => {
     if (!user) throw new Error("User not authenticated.");
 
-    const result = await translateSnookerScoreFromImage({ photoDataUri });
+    // Step 1: Convert the image to a standard JPEG format.
+    const conversionResult = await convertImageToJpeg({ photoDataUri });
+    const jpegDataUri = conversionResult.jpegDataUri;
+    
+    // Step 2: Use the converted JPEG to extract score information.
+    const result = await translateSnookerScoreFromImage({ photoDataUri: jpegDataUri });
+
     const newFrames: Frame[] = result.frames.map(f => ({
         player1Score: f.player1Score,
         player2Score: f.player2Score,
@@ -252,7 +259,7 @@ export default function DashboardPage() {
       player2TotalFoulPoints: result.player2TotalFoulPoints,
       frames: newFrames,
       status: 'ended', // Assume uploaded scoreboards are for ended matches
-      scoreboardImage: photoDataUri,
+      scoreboardImage: jpegDataUri, // Save the converted JPEG
     };
     await updateMatch(user.uid, updatedMatch);
     return updatedMatch;
@@ -307,7 +314,7 @@ export default function DashboardPage() {
     try {
       const zip = await JSZip.loadAsync(file);
       const imageFiles = Object.values(zip.files).filter(
-        (f) => !f.dir && /\.(jpe?g|png|gif|webp)$/i.test(f.name)
+        (f) => !f.dir && /\.(jpe?g|png|gif|webp|heic|heif)$/i.test(f.name)
       );
 
       let createdCount = 0;
