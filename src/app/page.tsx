@@ -454,7 +454,7 @@ export default function DashboardPage() {
                       <XAxis dataKey="name" stroke="hsl(var(--foreground))" tick={{fontSize: 12}} />
                       <YAxis stroke="hsl(var(--foreground))" allowDecimals={false} />
                       <Tooltip
-                          cursor={{fill: 'hsl(var(--accent))'}}
+                          cursor={false}
                           content={<CustomTooltip />}
                       />
                       <Legend />
@@ -477,7 +477,7 @@ export default function DashboardPage() {
                               <XAxis dataKey="month" stroke="hsl(var(--foreground))" tick={{fontSize: 12}} />
                               <YAxis stroke="hsl(var(--foreground))" allowDecimals={false} />
                               <Tooltip
-                                  cursor={{fill: 'hsl(var(--accent))'}}
+                                  cursor={false}
                                   content={<CustomTooltip />}
                               />
                               <Legend />
@@ -500,7 +500,7 @@ export default function DashboardPage() {
                               <XAxis dataKey="month" stroke="hsl(var(--foreground))" tick={{fontSize: 12}} />
                               <YAxis stroke="hsl(var(--foreground))" />
                               <Tooltip
-                                  cursor={{fill: 'hsl(var(--accent))'}}
+                                  cursor={false}
                                   content={<CustomTooltip />}
                               />
                               <Legend />
