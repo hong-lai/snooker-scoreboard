@@ -55,7 +55,7 @@ export function NewMatchForm() {
             <FormItem>
               <FormLabel>Player 1 Name</FormLabel>
               <FormControl>
-                <Input placeholder="e.g. John Doe" {...field} autoComplete="off" />
+                <Input placeholder="e.g. Ronnie O'Sullivan" {...field} autoComplete="off" />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -68,7 +68,7 @@ export function NewMatchForm() {
             <FormItem>
               <FormLabel>Player 2 Name</FormLabel>
               <FormControl>
-                <Input placeholder="e.g. Jane Smith" {...field} autoComplete="off" />
+                <Input placeholder="e.g. Judd Trump" {...field} autoComplete="off" />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -76,7 +76,7 @@ export function NewMatchForm() {
         />
         <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isSubmitting ? 'Creating Match...' : 'Start Match'}
+            {isSubmitting ? 'Starting Match...' : 'Start Match'}
         </Button>
       </form>
     </Form>

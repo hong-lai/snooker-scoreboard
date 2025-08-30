@@ -22,10 +22,10 @@ const TagIcon = ({ tag }: { tag?: string | null }) => {
     if (!tag) return null;
 
     if (tag === 'star') {
-        return <Star className="h-4 w-4 text-yellow-500" title="Star" />;
+        return <Star className="h-4 w-4 text-yellow-500" title="Star Frame" />;
     }
     if (tag === 'dot') {
-        return <Circle className="h-3 w-3 text-blue-500 fill-current" title="Dot" />;
+        return <Circle className="h-3 w-3 text-blue-500 fill-current" title="Dot Frame" />;
     }
     return null;
 }
@@ -149,7 +149,7 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
             {match.status === 'ended' && (
                 <div className="flex items-center gap-2 text-accent-foreground font-bold p-2 bg-accent rounded-lg absolute -top-2 -right-2 md:top-0 md:right-0 text-xs md:text-base">
                     <Trophy className="h-4 w-4 md:h-6 md:w-6" />
-                    <span>Match Ended</span>
+                    <span>Match Concluded</span>
                 </div>
             )}
         </div>
@@ -158,22 +158,22 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
                 <div className="font-bold">{match.player1Name}</div>
                  <div className="flex items-center justify-center gap-2">
                     <TrendingUp className="h-4 w-4 text-primary" />
-                    <span>Points: {p1TotalScore}</span>
+                    <span>Total Points: {p1TotalScore}</span>
                 </div>
                 <div className="flex items-center justify-center gap-2">
                     <ShieldAlert className="h-4 w-4 text-destructive" />
-                    <span>Fouls: {match.player1TotalFoulPoints}</span>
+                    <span>Foul Points: {match.player1TotalFoulPoints}</span>
                 </div>
             </div>
              <div className="text-center space-y-1">
                 <div className="font-bold">{match.player2Name}</div>
                  <div className="flex items-center justify-center gap-2">
                     <TrendingUp className="h-4 w-4 text-primary" />
-                    <span>Points: {p2TotalScore}</span>
+                    <span>Total Points: {p2TotalScore}</span>
                 </div>
                 <div className="flex items-center justify-center gap-2">
                     <ShieldAlert className="h-4 w-4 text-destructive" />
-                    <span>Fouls: {match.player2TotalFoulPoints}</span>
+                    <span>Foul Points: {match.player2TotalFoulPoints}</span>
                 </div>
             </div>
         </div>
@@ -275,14 +275,14 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
         {!isViewMode && (
             <Button onClick={handleSaveChanges} disabled={isSaving} className="w-full sm:w-auto">
                 {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                <Save className="mr-2 h-4 w-4" /> Save Changes
+                <Save className="mr-2 h-4 w-4" /> Save Frame & Changes
             </Button>
         )}
 
         {match.status === 'playing' && (
             <Button onClick={handleEndMatch} variant="destructive" disabled={isEndingMatch} className="w-full sm:w-auto sm:ml-auto">
                 {isEndingMatch && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                End Match
+                Conclude Match
             </Button>
         )}
 

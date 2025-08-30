@@ -436,16 +436,16 @@ export default function DashboardPage() {
           <Tabs defaultValue="wins" className="mb-8">
             <ScrollArea className="w-full whitespace-nowrap rounded-lg">
                 <TabsList className="inline-flex w-max">
-                    <TabsTrigger value="wins">Player Wins</TabsTrigger>
+                    <TabsTrigger value="wins">Player Rankings</TabsTrigger>
                     <TabsTrigger value="timeline">Match Timeline</TabsTrigger>
-                    <TabsTrigger value="scores">Player Scores</TabsTrigger>
+                    <TabsTrigger value="scores">Player Performance</TabsTrigger>
                 </TabsList>
             </ScrollArea>
             <TabsContent value="wins">
               <Card>
                   <CardHeader>
-                  <CardTitle>Player Leaderboard</CardTitle>
-                  <CardDescription>Total number of matches won by each player.</CardDescription>
+                  <CardTitle>Player Rankings</CardTitle>
+                  <CardDescription>Total number of frames won by each player across all matches.</CardDescription>
                   </CardHeader>
                   <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
@@ -458,7 +458,7 @@ export default function DashboardPage() {
                           content={<CustomTooltip />}
                       />
                       <Legend />
-                      <Bar dataKey="wins" fill="hsl(var(--primary))" name="Matches Won" />
+                      <Bar dataKey="wins" fill="hsl(var(--primary))" name="Frames Won" />
                       </BarChart>
                   </ResponsiveContainer>
                   </CardContent>
@@ -490,7 +490,7 @@ export default function DashboardPage() {
              <TabsContent value="scores">
               <Card>
                   <CardHeader>
-                      <CardTitle>Player Score Timeline</CardTitle>
+                      <CardTitle>Player Performance Timeline</CardTitle>
                       <CardDescription>Average points scored per frame by each player per month.</CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -521,7 +521,7 @@ export default function DashboardPage() {
           <div className="flex gap-2 w-full sm:w-auto">
             <Dialog>
                 <DialogTrigger asChild>
-                    <Button variant="outline" className="w-full"><Camera className="mr-2 h-4 w-4" /> Upload</Button>
+                    <Button variant="outline" className="w-full"><Camera className="mr-2 h-4 w-4" /> Upload Scoreboard</Button>
                 </DialogTrigger>
                 <DialogContent>
                     <DialogHeader>
