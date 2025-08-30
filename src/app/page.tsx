@@ -42,6 +42,7 @@ import { Switch } from '@/components/ui/switch';
 import imageCompression from 'browser-image-compression';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
+import { cn } from '@/lib/utils';
 
 
 interface PlayerWinData {
@@ -557,13 +558,13 @@ export default function DashboardPage() {
                     <TabsTrigger value="best_play">Best Play</TabsTrigger>
                 </TabsList>
                  <div className="flex items-center space-x-2 shrink-0">
-                    <Label htmlFor="time-period-switch">Year</Label>
+                    <Label htmlFor="time-period-switch" className={cn(timePeriod === 'year' ? 'text-foreground' : 'text-muted-foreground')}>Year</Label>
                     <Switch
                         id="time-period-switch"
                         checked={timePeriod === 'month'}
                         onCheckedChange={(checked) => setTimePeriod(checked ? 'month' : 'year')}
                     />
-                    <Label htmlFor="time-period-switch">Month</Label>
+                    <Label htmlFor="time-period-switch" className={cn(timePeriod === 'month' ? 'text-foreground' : 'text-muted-foreground')}>Month</Label>
                  </div>
             </div>
             <TabsContent value="wins">
@@ -723,8 +724,7 @@ export default function DashboardPage() {
                 </DialogContent>
             </Dialog>
             <Button variant="outline" className="flex-1" onClick={() => batchInputRef.current?.click()} disabled={isTranslating}>
-                {isTranslating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                <Upload className="mr-2 h-4 w-4" />
+                {isTranslating && batchProgress > 0 ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
                 Batch Upload
             </Button>
              <input 
