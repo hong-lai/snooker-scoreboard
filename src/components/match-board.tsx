@@ -190,32 +190,34 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
     <Card>
       <CardHeader className="text-center relative">
         {match.status === 'ended' && (
-            <div className="absolute top-4 right-4 flex items-center gap-2 text-accent-foreground font-bold p-2 bg-accent rounded-lg text-xs md:text-base">
-                <Trophy className="h-4 w-4 md:h-6 md:w-6" />
+          <div className="absolute top-4 right-4">
+            <div className="flex items-center gap-2 text-accent-foreground font-bold p-2 bg-accent rounded-lg text-xs md:text-base">
+                <Trophy className="h-4 w-4 md:h-5 md:w-5" />
                 <span>Match Concluded</span>
             </div>
+          </div>
         )}
         <div className="flex-1 text-center">
-            <div className="flex items-center justify-center">
-              <CardTitle className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                {isEditingNames ? (
-                  <>
+            {isEditingNames ? (
+              <div className="flex flex-col items-center justify-center gap-3">
+                <CardTitle className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full">
                   <Input value={editedNames.p1Name} name="p1Name" onChange={handleNameChange} className="text-2xl md:text-3xl font-bold h-12 text-center" />
                     <span className="text-xl md:text-2xl text-muted-foreground">vs</span>
                   <Input value={editedNames.p2Name} name="p2Name" onChange={handleNameChange} className="text-2xl md:text-3xl font-bold h-12 text-center" />
-                  <Button onClick={handleSaveNamesAndFouls} size="icon"><Check className="h-5 w-5"/></Button>
-                  <Button onClick={() => setIsEditingNames(false)} size="icon" variant="ghost"><X className="h-5 w-5"/></Button>
-                  </>
-                ) : (
-                  <>
-                    <span className="text-2xl md:text-3xl font-bold truncate">{match.player1Name}</span>
-                    <span className="text-xl md:text-2xl text-muted-foreground">vs</span>
-                    <span className="text-2xl md:text-3xl font-bold truncate">{match.player2Name}</span>
-                    <Button onClick={() => setIsEditingNames(true)} size="icon" variant="ghost" className="ml-2"><Edit className="h-5 w-5"/></Button>
-                  </>
-                )}
-              </CardTitle>
-            </div>
+                </CardTitle>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center">
+                <CardTitle className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                  <span className="text-2xl md:text-3xl font-bold truncate">{match.player1Name}</span>
+                  <span className="text-xl md:text-2xl text-muted-foreground">vs</span>
+                  <span className="text-2xl md:text-3xl font-bold truncate">{match.player2Name}</span>
+                  <Button onClick={() => setIsEditingNames(true)} size="icon" variant="ghost" className="ml-2 h-8 w-8">
+                    <Edit className="h-4 w-4"/>
+                  </Button>
+                </CardTitle>
+              </div>
+            )}
             <div className="text-3xl md:text-4xl font-bold text-primary mt-2">{p1Wins} - {p2Wins}</div>
         </div>
         <div className="grid grid-cols-2 gap-4 text-xs md:text-sm text-muted-foreground mt-6 border-t pt-4">
@@ -256,6 +258,12 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
                 </div>
             </div>
         </div>
+        {isEditingNames && (
+            <div className="flex justify-center gap-2 mt-4">
+                <Button onClick={handleSaveNamesAndFouls} size="sm"><Check className="mr-2 h-4 w-4" /> Save Details</Button>
+                <Button onClick={() => setIsEditingNames(false)} size="sm" variant="outline"><X className="mr-2 h-4 w-4" /> Cancel</Button>
+            </div>
+        )}
       </CardHeader>
       <CardContent className="px-2 sm:px-6">
         <Table>
