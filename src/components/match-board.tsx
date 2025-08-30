@@ -20,10 +20,10 @@ interface MatchBoardProps {
 const TagIcon = ({ tag }: { tag?: string }) => {
     if (!tag) return null;
 
-    if (tag.includes('star') || tag.includes('triangle')) {
+    if (tag.toLowerCase().includes('star') || tag.toLowerCase().includes('triangle')) {
         return <Star className="h-4 w-4 text-yellow-500" title={tag} />;
     }
-    if (tag.includes('dot') || tag.includes('circle')) {
+    if (tag.toLowerCase().includes('dot') || tag.toLowerCase().includes('circle')) {
         return <Circle className="h-3 w-3 text-blue-500 fill-current" title={tag} />;
     }
     return <span title={tag}>{tag}</span>;
@@ -70,20 +70,32 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
     };
 
     const updatedMatch = { ...match, frames: [...match.frames, frame] };
-    updateMatch(updatedMatch);
-    setMatch(updatedMatch);
-    setNewFrame({ p1Score: '', p2Score: '' });
-    onUpdate();
-    setIsSaving(false);
+    
+    try {
+        await updateMatch(updatedMatch);
+        setMatch(updatedMatch);
+        setNewFrame({ p1Score: '', p2Score: '' });
+        onUpdate();
+    } catch(e) {
+        toast({variant: 'destructive', title: "Error Saving", description: "Could not save the frame."})
+    } finally {
+        setIsSaving(false);
+    }
+    
   };
 
-  const handleEndMatch = () => {
+  const handleEndMatch = async () => {
     setIsEndingMatch(true);
     const updatedMatch = { ...match, status: 'ended' as const };
-    updateMatch(updatedMatch);
-    setMatch(updatedMatch);
-    onUpdate();
-    setIsEndingMatch(false);
+    try {
+        await updateMatch(updatedMatch);
+        setMatch(updatedMatch);
+        onUpdate();
+    } catch(e) {
+        toast({variant: 'destructive', title: "Error Ending Match", description: "Could not end the match."})
+    } finally {
+        setIsEndingMatch(false);
+    }
   };
 
   let p1Wins = 0;

@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,8 @@ import { useToast } from '@/hooks/use-toast';
 import { translateSnookerScoreFromImage } from '@/ai/flows/translate-snooker-score-from-image';
 import { format, parseISO } from 'date-fns';
 import JSZip from 'jszip';
+import { auth } from '@/lib/firebase';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 import {
   Bar,
   BarChart,
@@ -46,7 +48,6 @@ interface PlayerScoreByMonthData {
   [key: string]: any; // Player names as keys
 }
 
-// Function to parse date from filename (YYYY-MM-DD, YYYYMMDD, etc.)
 const parseDateFromFilename = (filename: string): Date | null => {
     const regex = /(\d{4})[-_]?(\d{2})[-_]?(\d{2})/;
     const match = filename.match(regex);
@@ -54,7 +55,6 @@ const parseDateFromFilename = (filename: string): Date | null => {
         const [, year, month, day] = match;
         const date = new Date(`${year}-${month}-${day}`);
         if (!isNaN(date.getTime())) {
-            // It's a valid date, return it (ensuring it's treated as UTC midnight)
             return new Date(date.getFullYear(), date.getMonth(), date.getDate());
         }
     }
@@ -97,7 +97,7 @@ const playerColors = [
 
 export default function DashboardPage() {
   const [matches, setMatches] = useState<Match[]>([]);
-  const [isMounted, setIsMounted] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [playerWinData, setPlayerWinData] = useState<PlayerWinData[]>([]);
   const [monthlyWinData, setMonthlyWinData] = useState<MonthlyWinData[]>([]);
   const [playerScoreByMonthData, setPlayerScoreByMonthData] = useState<PlayerScoreByMonthData[]>([]);
@@ -110,19 +110,9 @@ export default function DashboardPage() {
   const { toast } = useToast();
   const router = useRouter();
 
-  useEffect(() => {
-    const isLoggedIn = sessionStorage.getItem('isLoggedIn');
-    if (isLoggedIn !== 'true') {
-      router.replace('/login');
-    } else {
-      loadData();
-      setIsMounted(true);
-    }
-  }, [router]);
-
-
-  const loadData = () => {
-    const allMatches = getMatches();
+  const loadData = useCallback(async () => {
+    setIsLoading(true);
+    const allMatches = await getMatches();
     setMatches(allMatches);
 
     const playerStats: { [key: string]: { wins: number } } = {};
@@ -141,7 +131,6 @@ export default function DashboardPage() {
         monthlyPlayerScores[monthKey] = {};
       }
       
-      // Aggregate monthly stats
       if (match.status === 'ended') {
           if (!monthlyStats[monthKey]) {
               monthlyStats[monthKey] = 0;
@@ -149,7 +138,6 @@ export default function DashboardPage() {
           monthlyStats[monthKey]++;
       }
 
-      // Aggregate player stats
       if (!playerStats[match.player1Name]) playerStats[match.player1Name] = { wins: 0 };
       if (!playerStats[match.player2Name]) playerStats[match.player2Name] = { wins: 0 };
       
@@ -206,7 +194,20 @@ export default function DashboardPage() {
     setPlayerWinData(winData);
     setMonthlyWinData(monthlyData);
     setPlayerScoreByMonthData(scoreData);
-  }
+    setIsLoading(false);
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, user => {
+      if (user) {
+        loadData();
+      } else {
+        router.replace('/login');
+      }
+    });
+    return () => unsubscribe();
+  }, [router, loadData]);
+
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -231,7 +232,7 @@ export default function DashboardPage() {
     
     const matchDate = parseDateFromFilename(fileName) || new Date();
 
-    const newMatch = createMatch(result.player1Name, result.player2Name, matchDate);
+    const newMatch = await createMatch(result.player1Name, result.player2Name, matchDate);
     
     const reducedImage = await reduceImageSize(photoDataUri);
     
@@ -243,7 +244,7 @@ export default function DashboardPage() {
       status: 'ended', // Assume uploaded scoreboards are for ended matches
       scoreboardImage: reducedImage,
     };
-    updateMatch(updatedMatch);
+    await updateMatch(updatedMatch);
     return updatedMatch;
   };
 
@@ -334,21 +335,29 @@ export default function DashboardPage() {
     }
   };
 
-  const handleDeleteMatch = (id: string) => {
-    deleteMatch(id);
-    loadData();
-    toast({
-        title: "Match Deleted",
-        description: "The match has been successfully removed."
-    });
+  const handleDeleteMatch = async (id: string) => {
+    try {
+        await deleteMatch(id);
+        loadData();
+        toast({
+            title: "Match Deleted",
+            description: "The match has been successfully removed."
+        });
+    } catch(e) {
+        toast({
+            variant: "destructive",
+            title: "Deletion Failed",
+            description: "Could not delete the match.",
+        });
+    }
   };
 
-  const handleLogout = () => {
-    sessionStorage.removeItem('isLoggedIn');
+  const handleLogout = async () => {
+    await signOut(auth);
     router.replace('/login');
   };
 
-  if (!isMounted) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -504,7 +513,7 @@ export default function DashboardPage() {
 
         {matches.length > 0 ? (
           <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-            {matches.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map((match) => (
+            {matches.map((match) => (
               <MatchCard key={match.id} match={match} onDelete={() => handleDeleteMatch(match.id)} />
             ))}
           </div>

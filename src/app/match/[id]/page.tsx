@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Header } from '@/components/header';
 import { MatchBoard } from '@/components/match-board';
@@ -9,34 +9,36 @@ import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Loader2 } from 'lucide-react';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 export default function MatchPage() {
   const params = useParams();
   const router = useRouter();
   const [match, setMatch] = useState<Match | null | undefined>(undefined);
-  const [isMounted, setIsMounted] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-     const isLoggedIn = sessionStorage.getItem('isLoggedIn');
-    if (isLoggedIn !== 'true') {
-      router.replace('/login');
-    } else {
-      setIsMounted(true);
-      updateMatchData();
-      // Poll for updates to reflect changes from other tabs/windows
-      const interval = setInterval(updateMatchData, 1000);
-      return () => clearInterval(interval);
-    }
-  }, [params.id, router]);
-
-  const updateMatchData = () => {
+  const updateMatchData = useCallback(async () => {
     if (params.id) {
-      const matchData = getMatchById(params.id as string);
+      const matchData = await getMatchById(params.id as string);
       setMatch(matchData);
+      setIsLoading(false);
     }
-  };
+  }, [params.id]);
+  
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, user => {
+      if (user) {
+        updateMatchData();
+      } else {
+        router.replace('/login');
+      }
+    });
+    return () => unsubscribe();
+  }, [router, updateMatchData]);
 
-  if (!isMounted) {
+
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -85,7 +87,7 @@ function MatchNotFound() {
     return (
         <div className="text-center py-16">
             <h2 className="text-2xl font-bold">Match Not Found</h2>
-            <p className="text-muted-foreground mt-2">The match you are looking for does not exist.</p>
+            <p className="text-muted-foreground mt-2">The match you are looking for does not exist or you do not have permission to view it.</p>
         </div>
     )
 }

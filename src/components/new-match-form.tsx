@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { createMatch } from '@/lib/store';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
   player1Name: z.string().min(1, 'Player 1 name is required.'),
@@ -18,6 +19,7 @@ const formSchema = z.object({
 
 export function NewMatchForm() {
   const router = useRouter();
+  const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -27,10 +29,19 @@ export function NewMatchForm() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
-    const newMatch = createMatch(values.player1Name, values.player2Name, new Date());
-    router.push(`/match/${newMatch.id}`);
+    try {
+        const newMatch = await createMatch(values.player1Name, values.player2Name, new Date());
+        router.push(`/match/${newMatch.id}`);
+    } catch(e) {
+        toast({
+            variant: "destructive",
+            title: "Failed to create match",
+            description: "Please make sure you are logged in."
+        });
+        setIsSubmitting(false);
+    }
   }
 
   return (
@@ -70,5 +81,3 @@ export function NewMatchForm() {
     </Form>
   );
 }
-
-    
