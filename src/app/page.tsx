@@ -38,6 +38,7 @@ import { auth } from '@/lib/firebase';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
 
 
 interface PlayerWinData {
@@ -470,16 +471,25 @@ export default function DashboardPage() {
       <main className="p-4 md:p-8 page-transition">
         {hasData && (
           <Tabs defaultValue="wins" className="mb-8">
-            <div className="flex flex-wrap justify-between items-center gap-y-4 mb-2">
-                <ScrollArea className="w-full sm:w-auto whitespace-nowrap rounded-lg">
-                    <TabsList className="inline-flex w-max">
-                        <TabsTrigger value="wins">Player Rankings</TabsTrigger>
-                        <TabsTrigger value="timeline">Match Timeline</TabsTrigger>
-                        <TabsTrigger value="activity">Match Activity</TabsTrigger>
-                        <TabsTrigger value="scores">Player Performance</TabsTrigger>
-                    </TabsList>
-                </ScrollArea>
-                 <div className="flex items-center space-x-2 ml-auto">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-2">
+                <Carousel
+                  opts={{
+                    align: "start",
+                    dragFree: true,
+                  }}
+                  className="w-full max-w-sm sm:max-w-md"
+                >
+                  <CarouselContent className="-ml-1">
+                      <TabsList className="ml-1">
+                          <TabsTrigger value="wins">Player Rankings</TabsTrigger>
+                          <TabsTrigger value="timeline">Match Timeline</TabsTrigger>
+                          <TabsTrigger value="activity">Match Activity</TabsTrigger>
+                          <TabsTrigger value="scores">Player Performance</TabsTrigger>
+                      </TabsList>
+                  </CarouselContent>
+                </Carousel>
+
+                 <div className="flex items-center space-x-2 sm:ml-auto">
                     <Label htmlFor="time-period-switch">Year</Label>
                     <Switch
                         id="time-period-switch"
