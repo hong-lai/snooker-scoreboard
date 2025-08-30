@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 import { verifySnookerScoreEntry } from '@/ai/flows/verify-snooker-score-entry';
-import { Loader2, Save, Trophy, Star, ShieldAlert, TrendingUp, Circle, FileImage, Edit, Check } from 'lucide-react';
+import { Loader2, Save, Trophy, Star, ShieldAlert, TrendingUp, Circle, FileImage, Edit, Check, X } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -39,11 +39,14 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [isEndingMatch, setIsEndingMatch] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isEditingNames, setIsEditingNames] = useState(false);
+  const [editedNames, setEditedNames] = useState({ p1Name: initialMatch.player1Name, p2Name: initialMatch.player2Name });
   const { toast } = useToast();
 
   useEffect(() => {
     setMatch(initialMatch);
     setEditedFrames(initialMatch.frames);
+    setEditedNames({p1Name: initialMatch.player1Name, p2Name: initialMatch.player2Name});
   }, [initialMatch]);
 
 
@@ -127,6 +130,25 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
     setIsEditing(false);
   }
 
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const {name, value} = e.target;
+    setEditedNames(prev => ({...prev, [name]: value}));
+  }
+
+  const handleSaveNames = async () => {
+    if (!user) return;
+    const updatedMatch = {...match, player1Name: editedNames.p1Name, player2Name: editedNames.p2Name };
+    try {
+        await updateMatch(user.uid, updatedMatch);
+        setMatch(updatedMatch);
+        setIsEditingNames(false);
+        onUpdate();
+        toast({title: "Names Updated", description: "Player names have been successfully changed."})
+    } catch(e) {
+        toast({variant: 'destructive', title: "Error Saving Names", description: "Could not update player names."})
+    }
+  }
+
   const p1Wins = match.frames.reduce((acc, frame) => acc + (frame.player1Score > frame.player2Score ? 1 : 0), 0);
   const p2Wins = match.frames.reduce((acc, frame) => acc + (frame.player2Score > frame.player1Score ? 1 : 0), 0);
 
@@ -141,9 +163,22 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
         <div className="flex justify-between items-start relative">
             <div className="flex-1 text-center">
                 <CardTitle className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                  <span className="text-2xl md:text-3xl font-bold truncate">{match.player1Name}</span>
-                  <span className="text-xl md:text-2xl text-muted-foreground">vs</span>
-                  <span className="text-2xl md:text-3xl font-bold truncate">{match.player2Name}</span>
+                  {isEditingNames ? (
+                    <>
+                     <Input value={editedNames.p1Name} name="p1Name" onChange={handleNameChange} className="text-2xl md:text-3xl font-bold h-12 text-center" />
+                      <span className="text-xl md:text-2xl text-muted-foreground">vs</span>
+                     <Input value={editedNames.p2Name} name="p2Name" onChange={handleNameChange} className="text-2xl md:text-3xl font-bold h-12 text-center" />
+                     <Button onClick={handleSaveNames} size="icon"><Check /></Button>
+                     <Button onClick={() => setIsEditingNames(false)} size="icon" variant="ghost"><X/></Button>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-2xl md:text-3xl font-bold truncate">{match.player1Name}</span>
+                      <span className="text-xl md:text-2xl text-muted-foreground">vs</span>
+                      <span className="text-2xl md:text-3xl font-bold truncate">{match.player2Name}</span>
+                      <Button onClick={() => setIsEditingNames(true)} size="icon" variant="ghost" className="ml-2"><Edit/></Button>
+                    </>
+                  )}
                 </CardTitle>
                 <div className="text-3xl md:text-4xl font-bold text-primary mt-2">{p1Wins} - {p2Wins}</div>
             </div>
