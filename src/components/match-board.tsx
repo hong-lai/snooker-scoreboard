@@ -13,6 +13,7 @@ import { verifySnookerScoreEntry } from '@/ai/flows/verify-snooker-score-entry';
 import { Loader2, Save, Trophy, Star, ShieldAlert, TrendingUp, Circle, FileImage, Edit, Check, X } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Label } from './ui/label';
 
 interface MatchBoardProps {
   initialMatch: Match;
@@ -41,12 +42,14 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isEditingNames, setIsEditingNames] = useState(false);
   const [editedNames, setEditedNames] = useState({ p1Name: initialMatch.player1Name, p2Name: initialMatch.player2Name });
+  const [editedFouls, setEditedFouls] = useState({p1Fouls: initialMatch.player1TotalFoulPoints, p2Fouls: initialMatch.player2TotalFoulPoints});
   const { toast } = useToast();
 
   useEffect(() => {
     setMatch(initialMatch);
     setEditedFrames(initialMatch.frames);
     setEditedNames({p1Name: initialMatch.player1Name, p2Name: initialMatch.player2Name});
+    setEditedFouls({p1Fouls: initialMatch.player1TotalFoulPoints, p2Fouls: initialMatch.player2TotalFoulPoints});
   }, [initialMatch]);
 
 
@@ -135,17 +138,43 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
     setEditedNames(prev => ({...prev, [name]: value}));
   }
 
-  const handleSaveNames = async () => {
+  const handleFoulChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const {name, value} = e.target;
+    if (/^\d*$/.test(value)) {
+      setEditedFouls(prev => ({...prev, [name]: parseInt(value) || 0 }));
+    }
+  }
+
+  const handleSaveNamesAndFouls = async () => {
     if (!user) return;
-    const updatedMatch = {...match, player1Name: editedNames.p1Name, player2Name: editedNames.p2Name };
+
+    const p1TotalScore = editedFrames.reduce((sum, frame) => sum + frame.player1Score, 0);
+    const p2TotalScore = editedFrames.reduce((sum, frame) => sum + frame.player2Score, 0);
+    
+    if (editedFouls.p1Fouls < p1TotalScore) {
+        toast({variant: 'destructive', title: 'Invalid Foul Points', description: `${editedNames.p1Name}'s foul points cannot be less than their total score.`});
+        return;
+    }
+     if (editedFouls.p2Fouls < p2TotalScore) {
+        toast({variant: 'destructive', title: 'Invalid Foul Points', description: `${editedNames.p2Name}'s foul points cannot be less than their total score.`});
+        return;
+    }
+
+    const updatedMatch = {
+        ...match, 
+        player1Name: editedNames.p1Name, 
+        player2Name: editedNames.p2Name,
+        player1TotalFoulPoints: editedFouls.p1Fouls,
+        player2TotalFoulPoints: editedFouls.p2Fouls,
+    };
     try {
         await updateMatch(user.uid, updatedMatch);
         setMatch(updatedMatch);
         setIsEditingNames(false);
         onUpdate();
-        toast({title: "Names Updated", description: "Player names have been successfully changed."})
+        toast({title: "Details Updated", description: "Player names and fouls have been successfully changed."})
     } catch(e) {
-        toast({variant: 'destructive', title: "Error Saving Names", description: "Could not update player names."})
+        toast({variant: 'destructive', title: "Error Saving", description: "Could not update match details."})
     }
   }
 
@@ -168,7 +197,7 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
                      <Input value={editedNames.p1Name} name="p1Name" onChange={handleNameChange} className="text-2xl md:text-3xl font-bold h-12 text-center" />
                       <span className="text-xl md:text-2xl text-muted-foreground">vs</span>
                      <Input value={editedNames.p2Name} name="p2Name" onChange={handleNameChange} className="text-2xl md:text-3xl font-bold h-12 text-center" />
-                     <Button onClick={handleSaveNames} size="icon"><Check /></Button>
+                     <Button onClick={handleSaveNamesAndFouls} size="icon"><Check /></Button>
                      <Button onClick={() => setIsEditingNames(false)} size="icon" variant="ghost"><X/></Button>
                     </>
                   ) : (
@@ -198,7 +227,14 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
                 </div>
                 <div className="flex items-center justify-center gap-2">
                     <ShieldAlert className="h-4 w-4 text-destructive" />
-                    <span>Foul Points: {match.player1TotalFoulPoints}</span>
+                    {isEditingNames ? (
+                        <div className='flex items-center gap-2'>
+                           <Label htmlFor='p1Fouls'>Foul Points:</Label>
+                           <Input id='p1Fouls' name="p1Fouls" value={editedFouls.p1Fouls} onChange={handleFoulChange} className="w-20 h-8 text-center" />
+                        </div>
+                    ) : (
+                       <span>Foul Points: {match.player1TotalFoulPoints}</span>
+                    )}
                 </div>
             </div>
              <div className="text-center space-y-1">
@@ -209,7 +245,14 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
                 </div>
                 <div className="flex items-center justify-center gap-2">
                     <ShieldAlert className="h-4 w-4 text-destructive" />
-                    <span>Foul Points: {match.player2TotalFoulPoints}</span>
+                     {isEditingNames ? (
+                        <div className='flex items-center gap-2'>
+                           <Label htmlFor='p2Fouls'>Foul Points:</Label>
+                           <Input id='p2Fouls' name="p2Fouls" value={editedFouls.p2Fouls} onChange={handleFoulChange} className="w-20 h-8 text-center" />
+                        </div>
+                    ) : (
+                       <span>Foul Points: {match.player2TotalFoulPoints}</span>
+                    )}
                 </div>
             </div>
         </div>
