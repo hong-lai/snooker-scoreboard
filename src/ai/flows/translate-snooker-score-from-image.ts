@@ -29,7 +29,7 @@ const TranslateSnookerScoreFromImageOutputSchema = z.object({
       frameNumber: z.number().describe("The number of the frame, which is inside a circle."),
       player1Score: z.number().describe("Player 1's score for the frame."),
       player2Score: z.number().describe("Player 2's score for the frame."),
-      tag: z.string().nullable().optional().describe("A special tag associated with the frame. Must be 'star' for a star (☆), 'dot' for a circle/dot (•), or null if no valid tag is present."),
+      tag: z.enum(['star', 'dot']).nullable().optional().describe("A special tag associated with the frame. Must be 'star' for a star (☆), 'dot' for a circle/dot (•), or null if no valid tag is present."),
     })
   ).describe("Array of frame scores for each player, and any associated tags, ordered by frame number."),
 });
@@ -43,7 +43,7 @@ export async function translateSnookerScoreFromImage(
   // Post-process to filter and normalize tags.
   result.frames.forEach(frame => {
     if (frame.tag) {
-      const lowerTag = frame.tag.toLowerCase();
+      const lowerTag = (frame.tag as string).toLowerCase();
       if (lowerTag.includes('star') || lowerTag.includes('☆')) {
         frame.tag = 'star';
       } else if (lowerTag.includes('dot') || lowerTag.includes('circle') || lowerTag.includes('•')) {

@@ -1,7 +1,7 @@
 export interface Frame {
   player1Score: number;
   player2Score: number;
-  tag?: string | null;
+  tag: 'star' | 'dot' | null;
 }
 
 export interface Match {
