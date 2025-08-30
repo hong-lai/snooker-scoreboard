@@ -9,8 +9,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Loader2 } from 'lucide-react';
-import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
 
 export default function MatchPage() {
   const params = useParams();
@@ -18,23 +16,21 @@ export default function MatchPage() {
   const [match, setMatch] = useState<Match | null | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
 
-  const updateMatchData = useCallback(async () => {
+  const updateMatchData = useCallback(() => {
     if (params.id) {
-      const matchData = await getMatchById(params.id as string);
+      const matchData = getMatchById(params.id as string);
       setMatch(matchData);
       setIsLoading(false);
     }
   }, [params.id]);
   
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, user => {
-      if (user) {
-        updateMatchData();
-      } else {
-        router.replace('/login');
-      }
-    });
-    return () => unsubscribe();
+    const isLoggedIn = sessionStorage.getItem('isLoggedIn');
+    if (!isLoggedIn) {
+      router.replace('/login');
+    } else {
+      updateMatchData();
+    }
   }, [router, updateMatchData]);
 
 

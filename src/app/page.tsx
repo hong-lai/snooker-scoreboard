@@ -16,8 +16,6 @@ import { useToast } from '@/hooks/use-toast';
 import { translateSnookerScoreFromImage } from '@/ai/flows/translate-snooker-score-from-image';
 import { format, parseISO } from 'date-fns';
 import JSZip from 'jszip';
-import { auth } from '@/lib/firebase';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
 import {
   Bar,
   BarChart,
@@ -112,7 +110,7 @@ export default function DashboardPage() {
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
-    const allMatches = await getMatches();
+    const allMatches = getMatches();
     setMatches(allMatches);
 
     const playerStats: { [key: string]: { wins: number } } = {};
@@ -198,14 +196,12 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, user => {
-      if (user) {
-        loadData();
-      } else {
-        router.replace('/login');
-      }
-    });
-    return () => unsubscribe();
+    const isLoggedIn = sessionStorage.getItem('isLoggedIn');
+    if (!isLoggedIn) {
+      router.replace('/login');
+    } else {
+      loadData();
+    }
   }, [router, loadData]);
 
 
@@ -232,7 +228,7 @@ export default function DashboardPage() {
     
     const matchDate = parseDateFromFilename(fileName) || new Date();
 
-    const newMatch = await createMatch(result.player1Name, result.player2Name, matchDate);
+    const newMatch = createMatch(result.player1Name, result.player2Name, matchDate);
     
     const reducedImage = await reduceImageSize(photoDataUri);
     
@@ -244,7 +240,7 @@ export default function DashboardPage() {
       status: 'ended', // Assume uploaded scoreboards are for ended matches
       scoreboardImage: reducedImage,
     };
-    await updateMatch(updatedMatch);
+    updateMatch(updatedMatch);
     return updatedMatch;
   };
 
@@ -335,9 +331,9 @@ export default function DashboardPage() {
     }
   };
 
-  const handleDeleteMatch = async (id: string) => {
+  const handleDeleteMatch = (id: string) => {
     try {
-        await deleteMatch(id);
+        deleteMatch(id);
         loadData();
         toast({
             title: "Match Deleted",
@@ -352,8 +348,8 @@ export default function DashboardPage() {
     }
   };
 
-  const handleLogout = async () => {
-    await signOut(auth);
+  const handleLogout = () => {
+    sessionStorage.removeItem('isLoggedIn');
     router.replace('/login');
   };
 

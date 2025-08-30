@@ -8,8 +8,6 @@ import Link from 'next/link';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
 
 
 export default function NewMatchPage() {
@@ -17,14 +15,12 @@ export default function NewMatchPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, user => {
-        if (user) {
-            setIsMounted(true);
-        } else {
-            router.replace('/login');
-        }
-    });
-    return () => unsubscribe();
+    const isLoggedIn = sessionStorage.getItem('isLoggedIn');
+    if (!isLoggedIn) {
+        router.replace('/login');
+    } else {
+        setIsMounted(true);
+    }
   }, [router]);
 
   if (!isMounted) {

@@ -6,7 +6,6 @@ export interface Frame {
 
 export interface Match {
   id: string;
-  userId: string;
   player1Name: string;
   player2Name:string;
   frames: Frame[];
