@@ -76,7 +76,7 @@ export function MatchCard({ match, onDelete }: MatchCardProps) {
         </Button>
          <AlertDialog>
             <AlertDialogTrigger asChild>
-                <Button variant="destructive" size="icon">
+                <Button variant="destructive" className="px-3">
                     <Trash2 className="h-4 w-4" />
                     <span className="sr-only">Delete Match</span>
                 </Button>
