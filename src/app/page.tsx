@@ -41,6 +41,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import imageCompression from 'browser-image-compression';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Progress } from '@/components/ui/progress';
 
 
 interface PlayerWinData {
@@ -139,6 +140,8 @@ export default function DashboardPage() {
   const [isTranslating, setIsTranslating] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [uploadedImagePreview, setUploadedImagePreview] = useState<string | null>(null);
+  const [batchProgress, setBatchProgress] = useState(0);
+  const [batchProgressText, setBatchProgressText] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const batchInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -377,9 +380,12 @@ export default function DashboardPage() {
     }
 
     setIsTranslating(true);
-    const { dismiss } = toast({
+    setBatchProgress(0);
+    setBatchProgressText('Starting batch upload...');
+    
+    const { dismiss: dismissProgressToast } = toast({
       title: 'Processing Batch Upload...',
-      description: 'Please wait while we extract and create your matches.',
+      description: 'This may take a few moments.',
     });
 
     try {
@@ -389,6 +395,9 @@ export default function DashboardPage() {
       );
 
       let createdCount = 0;
+      let processedCount = 0;
+      const totalFiles = imageFiles.length;
+
       for (const imageFile of imageFiles) {
         try {
           const content = await imageFile.async('base64');
@@ -398,25 +407,34 @@ export default function DashboardPage() {
           createdCount++;
         } catch (err) {
             console.error(`Failed to process ${imageFile.name}:`, err)
+        } finally {
+            processedCount++;
+            setBatchProgress((processedCount / totalFiles) * 100);
+            setBatchProgressText(`Processed ${processedCount} of ${totalFiles} images...`);
         }
       }
-
-       toast({
+      
+      dismissProgressToast();
+      toast({
         title: 'Batch Upload Complete',
-        description: `Successfully created ${createdCount} out of ${imageFiles.length} matches.`,
+        description: `Successfully created ${createdCount} out of ${totalFiles} matches.`,
       });
 
     } catch (error) {
       console.error(error);
+      dismissProgressToast();
       toast({
         variant: 'destructive',
         title: 'Batch Upload Failed',
         description: 'There was an error processing the zip file.',
       });
     } finally {
-      setIsTranslating(false);
+      setTimeout(() => {
+        setIsTranslating(false);
+        setBatchProgress(0);
+        setBatchProgressText('');
+      }, 2000); // Keep progress bar visible for a moment
       if (batchInputRef.current) batchInputRef.current.value = '';
-      dismiss();
       loadData(timePeriod);
     }
   };
@@ -664,7 +682,7 @@ export default function DashboardPage() {
           <div className="flex gap-2 w-full sm:w-auto">
             <Dialog>
                 <DialogTrigger asChild>
-                    <Button variant="outline" className="w-full"><Camera className="mr-2 h-4 w-4" /> Upload Scoreboard</Button>
+                    <Button variant="outline" className="flex-1"><Camera className="mr-2 h-4 w-4" /> Upload Score</Button>
                 </DialogTrigger>
                 <DialogContent>
                     <DialogHeader>
@@ -690,7 +708,19 @@ export default function DashboardPage() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-            <Button asChild className="w-full">
+            <Button variant="outline" className="flex-1" onClick={() => batchInputRef.current?.click()} disabled={isTranslating}>
+                {isTranslating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <Upload className="mr-2 h-4 w-4" />
+                Batch Upload
+            </Button>
+             <input 
+                type="file" 
+                accept=".zip" 
+                ref={batchInputRef} 
+                onChange={handleBatchUpload}
+                className="hidden"
+            />
+            <Button asChild className="flex-1">
               <Link href="/new-match">
                 <Plus className="mr-2 h-4 w-4" />
                 New Match
@@ -698,6 +728,13 @@ export default function DashboardPage() {
             </Button>
           </div>
         </div>
+
+        {isTranslating && batchProgress > 0 && (
+          <div className="mb-4 space-y-2">
+              <Progress value={batchProgress} />
+              <p className="text-sm text-muted-foreground text-center">{batchProgressText}</p>
+          </div>
+        )}
 
         {isLoading ? (
           <div className="text-center py-16">
@@ -714,25 +751,13 @@ export default function DashboardPage() {
           <div className="text-center py-16 border-2 border-dashed rounded-lg">
             <h3 className="text-xl font-medium">No Matches Found</h3>
             <p className="text-muted-foreground mt-2 mb-4">Get started by creating your first match or uploading scoreboards.</p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button asChild>
+            <Button asChild>
                 <Link href="/new-match">Create Your First Match</Link>
-              </Button>
-              <Button variant="outline" onClick={() => batchInputRef.current?.click()} disabled={isTranslating}>
-                {isTranslating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" /> }
-                Batch Upload
-              </Button>
-              <input 
-                type="file" 
-                accept=".zip" 
-                ref={batchInputRef} 
-                onChange={handleBatchUpload}
-                className="hidden"
-              />
-            </div>
+            </Button>
           </div>
         )}
       </main>
     </div>
   );
 }
+
