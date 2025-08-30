@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 import { translateSnookerScoreFromImage } from '@/ai/flows/translate-snooker-score-from-image';
-import { format, parseISO, isWithinInterval } from 'date-fns';
+import { format, parseISO, isWithinInterval, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
 import JSZip from 'jszip';
 import {
   Bar,
@@ -150,6 +150,11 @@ export default function DashboardPage() {
     const players = new Set<string>();
     const timeFormat = period === 'month' ? 'yyyy-MM' : 'yyyy';
     const displayFormat = period === 'month' ? 'MMM yyyy' : 'yyyy';
+    
+    const now = new Date();
+    const timeInterval = period === 'month' 
+        ? { start: startOfMonth(now), end: endOfMonth(now) }
+        : { start: startOfYear(now), end: endOfYear(now) };
 
     allMatches.forEach(match => {
       const matchDate = parseISO(match.createdAt);
@@ -191,7 +196,7 @@ export default function DashboardPage() {
           periodPlayerScores[periodKey][match.player2Name].totalScore += frame.player2Score;
           periodPlayerScores[periodKey][match.player2Name].frameCount++;
           
-          if (isWithinInterval(matchDate, { start: parseISO(periodKey), end: new Date() })) {
+          if (isWithinInterval(matchDate, timeInterval)) {
             if (frame.player1Score > playerBestPlays[match.player1Name]) {
                 playerBestPlays[match.player1Name] = frame.player1Score;
             }
@@ -201,8 +206,7 @@ export default function DashboardPage() {
           }
       });
       
-      const currentPeriodKey = format(new Date(), timeFormat);
-      if (periodKey === currentPeriodKey && match.status === 'ended') {
+      if (isWithinInterval(matchDate, timeInterval) && match.status === 'ended') {
         let p1Wins = 0;
         let p2Wins = 0;
         match.frames.forEach(frame => {
@@ -211,9 +215,9 @@ export default function DashboardPage() {
         });
 
         if (p1Wins > p2Wins) {
-          playerStats[match.player1Name].wins += 1;
+          playerStats[match.player1Name].wins++;
         } else if (p2Wins > p1Wins) {
-          playerStats[match.player2Name].wins += 1;
+          playerStats[match.player2Name].wins++;
         }
       }
     });
@@ -517,7 +521,7 @@ export default function DashboardPage() {
               <Card>
                   <CardHeader>
                   <CardTitle>Player Rankings</CardTitle>
-                  <CardDescription>Total number of frames won by each player for the selected period.</CardDescription>
+                  <CardDescription>Total number of matches won by each player for the selected period.</CardDescription>
                   </CardHeader>
                   <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
@@ -530,7 +534,7 @@ export default function DashboardPage() {
                           content={<CustomTooltip />}
                       />
                       <Legend />
-                      <Bar dataKey="wins" fill="hsl(var(--primary))" name="Frames Won" />
+                      <Bar dataKey="wins" fill="hsl(var(--primary))" name="Matches Won" />
                       </BarChart>
                   </ResponsiveContainer>
                   </CardContent>
