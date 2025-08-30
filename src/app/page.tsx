@@ -536,7 +536,7 @@ export default function DashboardPage() {
                       <BarChart data={playerWinData}>
                         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                         <XAxis dataKey="month" stroke="hsl(var(--foreground))" tick={{fontSize: 12}} />
-                        <YAxis stroke="hsl(var(--foreground))" allowDecimals={false} />
+                        <YAxis stroke="hsl(var(--foreground))" allowDecals={false} />
                         <Tooltip
                             cursor={{ fill: 'transparent' }}
                             content={<CustomTooltip />}
@@ -554,7 +554,7 @@ export default function DashboardPage() {
               <Card>
                   <CardHeader>
                       <CardTitle>Match Activity</CardTitle>
-                      <CardDescription>Total matches played per {timePeriod}.</CardDescription>
+                      <CardDescription>Total matches and frames played per {timePeriod}.</CardDescription>
                   </CardHeader>
                   <CardContent>
                       <ResponsiveContainer width="100%" height={300}>
@@ -568,6 +568,7 @@ export default function DashboardPage() {
                               />
                               <Legend />
                               <Bar dataKey="totalMatches" fill="hsl(var(--primary))" name="Total Matches" />
+                              <Bar dataKey="totalFrames" fill="hsl(var(--chart-2))" name="Total Frames" />
                           </BarChart>
                       </ResponsiveContainer>
                   </CardContent>
