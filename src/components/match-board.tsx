@@ -1,17 +1,30 @@
+
 'use client';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import type { Match, Frame } from '@/lib/types';
-import { updateMatch } from '@/lib/store';
+import { updateMatch, deleteMatch } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableCaption, TableFooter as UITableFooter } from '@/components/ui/table';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 import { verifySnookerScoreEntry } from '@/ai/flows/verify-snooker-score-entry';
-import { Loader2, Save, Trophy, Star, ShieldAlert, TrendingUp, Circle, FileImage, Edit, Check, X, MoreVertical, Ban, Calendar, Clock } from 'lucide-react';
+import { Loader2, Save, Trophy, Star, ShieldAlert, TrendingUp, Circle, FileImage, Edit, Check, X, MoreVertical, Ban, Calendar, Clock, Trash2 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Label } from './ui/label';
@@ -36,6 +49,7 @@ const TagIcon = ({ tag }: { tag?: Frame['tag'] }) => {
 
 export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
   const { user } = useAuth();
+  const router = useRouter();
   const [match, setMatch] = useState(initialMatch);
   const [editedFrames, setEditedFrames] = useState<Frame[]>(initialMatch.frames);
   const [newFrame, setNewFrame] = useState({ p1Score: '', p2Score: '' });
@@ -131,6 +145,24 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
         toast({variant: 'destructive', title: "Error Ending Match", description: "Could not end the match."})
     } finally {
         setIsEndingMatch(false);
+    }
+  };
+
+  const handleDeleteMatch = async () => {
+    if (!user) return;
+    try {
+      await deleteMatch(user.uid, match.id);
+      toast({
+        title: 'Match Deleted',
+        description: 'The match has been successfully removed.',
+      });
+      router.push('/');
+    } catch (e) {
+      toast({
+        variant: 'destructive',
+        title: 'Deletion Failed',
+        description: 'Could not delete the match.',
+      });
     }
   };
   
@@ -445,6 +477,33 @@ export function MatchBoard({ initialMatch, onUpdate }: MatchBoardProps) {
                 </TooltipContent>
             </Tooltip>
         )}
+
+        <AlertDialog>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="icon">
+                            <Trash2 />
+                        </Button>
+                    </AlertDialogTrigger>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>Delete Match</p>
+                </TooltipContent>
+            </Tooltip>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete this match and all of its data.
+                </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDeleteMatch}>Continue</AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
         </TooltipProvider>
       </CardFooter>
     </Card>

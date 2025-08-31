@@ -1,3 +1,4 @@
+
 'use client';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,24 +7,12 @@ import { Button } from '@/components/ui/button';
 import type { Match } from '@/lib/types';
 import { Users, Calendar, ChevronRight, Trophy, Trash2 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
 
 interface MatchCardProps {
   match: Match;
-  onDelete: () => void;
 }
 
-export function MatchCard({ match, onDelete }: MatchCardProps) {
+export function MatchCard({ match }: MatchCardProps) {
   const calculateFinalScore = () => {
     if (match.status !== 'ended') return null;
     let p1Wins = 0;
@@ -74,26 +63,6 @@ export function MatchCard({ match, onDelete }: MatchCardProps) {
             View Match <ChevronRight className="ml-2 h-4 w-4" />
           </Link>
         </Button>
-         <AlertDialog>
-            <AlertDialogTrigger asChild>
-                <Button variant="destructive" className="px-3">
-                    <Trash2 className="h-4 w-4" />
-                    <span className="sr-only">Delete Match</span>
-                </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-                <AlertDialogHeader>
-                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete this match and all of its data.
-                </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={onDelete}>Continue</AlertDialogAction>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
       </CardFooter>
     </Card>
   );

@@ -454,24 +454,6 @@ export default function DashboardPage() {
     }
   };
 
-  const handleDeleteMatch = async (id: string) => {
-    if (!user) return;
-    try {
-        await deleteMatch(user.uid, id);
-        loadData(timePeriod);
-        toast({
-            title: "Match Deleted",
-            description: "The match has been successfully removed."
-        });
-    } catch(e) {
-        toast({
-            variant: "destructive",
-            title: "Deletion Failed",
-            description: "Could not delete the match.",
-        });
-    }
-  };
-
   const handleLogout = async () => {
     try {
       await signOut(auth);
@@ -758,7 +740,7 @@ export default function DashboardPage() {
         ) : hasData ? (
           <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
             {matches.map((match) => (
-              <MatchCard key={match.id} match={match} onDelete={() => handleDeleteMatch(match.id)} />
+              <MatchCard key={match.id} match={match} />
             ))}
           </div>
         ) : (
