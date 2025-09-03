@@ -23,6 +23,18 @@ export const getMatches = async (userId: string): Promise<Match[]> => {
     return matchList;
 };
 
+export const getAllMatchesWithDetails = async (userId: string): Promise<Match[]> => {
+    const matchesCol = getMatchesCollection(userId);
+    const q = query(matchesCol, orderBy('createdAt', 'desc'));
+    const matchSnapshot = await getDocs(q);
+    const matchList = matchSnapshot.docs.map(doc => {
+        const data = doc.data();
+        delete data.scoreboardImage;
+        return { id: doc.id, ...data } as Match;
+    });
+    return matchList;
+}
+
 export const getMatchById = async (userId: string, id: string): Promise<Match | null> => {
     const matchDocRef = doc(db, 'users', userId, MATCHES_COLLECTION, id);
     const matchDoc = await getDoc(matchDocRef);
