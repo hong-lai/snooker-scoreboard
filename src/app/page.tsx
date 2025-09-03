@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Header } from '@/components/header';
 import { MatchCard } from '@/components/match-card';
 import type { Match, Frame } from '@/lib/types';
-import { getMatches, createMatch, updateMatch, deleteMatch } from '@/lib/store';
+import { getMatches, createMatch, updateMatch } from '@/lib/store';
 import { useAuth } from '@/hooks/use-auth';
 import { Plus, Camera, Loader2, Star, Circle, LogOut, Upload, User as UserIcon, ArrowRight } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -43,7 +43,6 @@ import imageCompression from 'browser-image-compression';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
-
 
 interface PlayerWinData {
   name: string;
@@ -630,7 +629,7 @@ export default function DashboardPage() {
                 <CardHeader>
                   <CardTitle>Top 10 Frame Scores</CardTitle>
                   <CardDescription>
-                    The highest single-frame scores across all matches for the selected period.
+                    The highest single-frame scores across all matches.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>

@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { SnookerIcon } from '@/components/icons/snooker-icon';
 import type { ReactNode } from 'react';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { Button } from './ui/button';
+import { LayoutGrid } from 'lucide-react';
 
 export function Header({ children }: { children?: ReactNode }) {
   return (
@@ -15,6 +17,12 @@ export function Header({ children }: { children?: ReactNode }) {
           </h1>
         </Link>
         <div className="flex items-center gap-2">
+          <Button asChild variant="ghost" size="sm">
+            <Link href="/data">
+                <LayoutGrid className="mr-2 h-4 w-4"/>
+                Data
+            </Link>
+          </Button>
           {children}
           <ThemeToggle />
         </div>
