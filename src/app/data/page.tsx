@@ -52,18 +52,20 @@ export default function AllDataPage() {
   const flatData = useMemo(() => {
     const data: FlatFrameData[] = [];
     matches.forEach(match => {
-      match.frames.forEach((frame, index) => {
-        data.push({
-          matchId: match.id,
-          date: format(parseISO(match.createdAt), 'yyyy-MM-dd'),
-          player1Name: match.player1Name,
-          player2Name: match.player2Name,
-          frameNumber: index + 1,
-          player1Score: frame.player1Score,
-          player2Score: frame.player2Score,
-          tag: frame.tag,
+      if (match.frames && Array.isArray(match.frames)) {
+        match.frames.forEach((frame, index) => {
+          data.push({
+            matchId: match.id,
+            date: format(parseISO(match.createdAt), 'yyyy-MM-dd'),
+            player1Name: match.player1Name,
+            player2Name: match.player2Name,
+            frameNumber: index + 1,
+            player1Score: frame.player1Score,
+            player2Score: frame.player2Score,
+            tag: frame.tag,
+          });
         });
-      });
+      }
     });
     return data;
   }, [matches]);
@@ -82,9 +84,8 @@ export default function AllDataPage() {
         });
       } else {
         toast({
-          variant: 'destructive',
-          title: 'Export Failed',
-          description: 'No data available to export.',
+          title: 'No Data to Export',
+          description: 'There was no match data found to export.',
         });
       }
     } catch (error) {

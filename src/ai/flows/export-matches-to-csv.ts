@@ -11,7 +11,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { getAllMatchesWithDetails } from '@/lib/store';
 import type { Match } from '@/lib/types';
-import { parse } from 'papaparse';
+import { unparse } from 'papaparse';
 
 const ExportMatchesToCsvInputSchema = z.object({
   userId: z.string().describe('The ID of the user whose matches to export.'),
@@ -41,7 +41,7 @@ const exportMatchesToCsvFlow = ai.defineFlow(
     }
 
     const flattenedData = matches.flatMap(match => 
-        match.frames.map((frame, index) => ({
+        (match.frames && Array.isArray(match.frames)) ? match.frames.map((frame, index) => ({
             match_id: match.id,
             date: match.createdAt,
             player1_name: match.player1Name,
@@ -53,10 +53,14 @@ const exportMatchesToCsvFlow = ai.defineFlow(
             player1_total_foul_points: match.player1TotalFoulPoints,
             player2_total_foul_points: match.player2TotalFoulPoints,
             status: match.status,
-        }))
+        })) : []
     );
 
-    const csvData = parse(flattenedData, { header: true });
+    if (flattenedData.length === 0) {
+      return { csvData: '' };
+    }
+
+    const csvData = unparse(flattenedData, { header: true });
 
     return { csvData };
   }
